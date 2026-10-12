@@ -114,15 +114,50 @@ def test_mes_com_999_resultados_nao_e_subdividido(api):
     assert len(resultado) == 999
 
 
-def test_dia_com_1000_resultados_gera_aviso(api, caplog):
+def test_dia_com_1000_resultados_e_subdividido_em_horas(api, caplog):
     api.respostas["2025-11-01..2025-11-30"] = em_massa(1000)
     api.respostas["2025-11-10..2025-11-10"] = em_massa(1000, base=200_000)
+    api.respostas["2025-11-10T08:00:00Z..2025-11-10T08:59:59Z"] = [bruto(1, "2025-11-10T08:30:00Z")]
+    api.respostas["2025-11-10T23:00:00Z..2025-11-10T23:59:59Z"] = [bruto(2, "2025-11-10T23:59:59Z")]
 
     with caplog.at_level(logging.WARNING, logger="pipeline.runs"):
         resultado = runs.coletar_runs("o", "r", "main", INICIO, FIM)
 
-    assert any("2025-11-10" in mensagem for mensagem in caplog.messages)
+    consultas = [c[1]["created"] for c in api.chamadas]
+    assert len(consultas) == 12 + 30 + 24  # 12 meses + 30 dias de novembro + 24 horas do dia 10
+    assert "2025-11-10T00:00:00Z..2025-11-10T00:59:59Z" in consultas
+    assert [r["id"] for r in resultado] == [1, 2]  # só o que veio das consultas por hora
+    assert caplog.messages == []
+
+
+def test_hora_com_1000_resultados_gera_aviso_e_mantem_o_que_veio(api, caplog):
+    api.respostas["2025-11-01..2025-11-30"] = em_massa(1000)
+    api.respostas["2025-11-10..2025-11-10"] = em_massa(1000, base=200_000)
+    api.respostas["2025-11-10T08:00:00Z..2025-11-10T08:59:59Z"] = em_massa(1000, "2025-11-10T08:30:00Z", base=300_000)
+
+    with caplog.at_level(logging.WARNING, logger="pipeline.runs"):
+        resultado = runs.coletar_runs("o", "r", "main", INICIO, FIM)
+
+    assert len(caplog.messages) == 1
+    assert "2025-11-10" in caplog.messages[0] and "08 h" in caplog.messages[0]
     assert len(resultado) == 1000  # mantém o que veio, truncado
+
+
+def test_resultado_e_o_mesmo_com_consultas_em_paralelo(api, monkeypatch):
+    api.respostas["2025-10-01..2025-10-31"] = [bruto(1, "2025-10-05T10:00:00Z")]
+    api.respostas["2025-11-01..2025-11-30"] = em_massa(1000)
+    api.respostas["2025-11-10..2025-11-10"] = em_massa(1000, base=200_000)
+    api.respostas["2025-11-20..2025-11-20"] = [bruto(4, "2025-11-20T08:00:00Z")]
+    api.respostas["2025-11-10T08:00:00Z..2025-11-10T08:59:59Z"] = [bruto(2, "2025-11-10T08:30:00Z")]
+    api.respostas["2025-11-10T09:00:00Z..2025-11-10T09:59:59Z"] = [bruto(3, "2025-11-10T09:30:00Z")]
+    api.respostas["2026-09-01..2026-09-30"] = [bruto(5, "2026-09-30T23:00:00Z")]
+    em_sequencia = runs.coletar_runs("o", "r", "main", INICIO, FIM)
+
+    monkeypatch.setitem(runs.cliente_http._estado, "simultaneas", 8)
+    em_paralelo = runs.coletar_runs("o", "r", "main", INICIO, FIM)
+
+    assert [r["id"] for r in em_paralelo] == [1, 2, 3, 4, 5]
+    assert em_paralelo == em_sequencia
 
 
 def test_campos_normalizados_a_partir_da_fixture(api, fixture_json):

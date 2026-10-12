@@ -94,8 +94,8 @@ class Mundo:
             raise ErroHTTP(502)
         return spec
 
-    def configurar(self, token, pasta_cache):
-        self.configurado = (token, pasta_cache)
+    def configurar(self, token, pasta_cache, simultaneas=1):
+        self.configurado = (token, pasta_cache, simultaneas)
 
     def buscar_candidatos(self, faixas):
         self.faixas_buscadas.extend(faixas)
@@ -158,7 +158,9 @@ def rodar(tmp_path):
     caminho = tmp_path / "config.yaml"
     caminho.write_text(CONFIG, encoding="utf-8")
 
-    def _rodar(*argumentos):
+    def _rodar(*argumentos, paralelismo=None):
+        if paralelismo is not None:
+            caminho.write_text(CONFIG + f"coleta:\n  paralelismo: {paralelismo}\n", encoding="utf-8")
         return principal.main(["--config", str(caminho), *argumentos])
 
     return _rodar
@@ -271,6 +273,72 @@ def test_candidatos_esgotados_gravam_o_que_houver(mundo, rodar, tmp_path):
 
     assert len(repositorios(tmp_path)) == 1
     assert ler(tmp_path, "funil.csv")[-1][:3] == ["Runs válidos na janela", "1", "1"]
+
+
+# execução em paralelo
+
+
+def _mundo_variado(mundo):
+    mundo.repo("o/sem-actions", actions=False)
+    mundo.repo("o/a")
+    mundo.repo("o/erro", erro="runs")
+    mundo.repo("o/poucas-releases", releases=4)
+    mundo.repo("o/b", ignoradas_404=1)
+    mundo.repo("o/poucos-runs", runs=["success"] * 49)
+    mundo.repo("o/c", runs=["success"] * 50, commits=False)
+    mundo.repo("o/d", estrelas=7000, faixa="5000..10000")
+    mundo.repo("o/e", estrelas=6000, faixa="5000..10000")
+
+
+def test_paralelismo_nao_altera_as_saidas(mundo, rodar, tmp_path):
+    _mundo_variado(mundo)
+    rodar("--limite", "4")
+    em_sequencia = (ler(tmp_path, "funil.csv"), ler(tmp_path, "repositorios.csv"))
+
+    assert rodar("--limite", "4", paralelismo=4) == 0
+
+    assert (ler(tmp_path, "funil.csv"), ler(tmp_path, "repositorios.csv")) == em_sequencia
+    assert [linha[0] for linha in em_sequencia[1][1:]] == ["o/a", "o/b", "o/c", "o/d"]
+
+
+def test_paralelismo_vai_para_o_cliente_http(mundo, rodar, tmp_path):
+    rodar(paralelismo=3)
+
+    assert mundo.configurado == ("token-de-teste", str(tmp_path / "cache"), 3)
+
+
+def test_em_paralelo_o_que_sobra_apos_o_limite_e_interrompido(mundo, rodar, tmp_path, monkeypatch):
+    interrupcoes = []
+    monkeypatch.setattr(principal.cliente_http, "interromper", lambda: interrupcoes.append(True))
+    for nome in ("o/a", "o/b", "o/c", "o/d", "o/e", "o/f"):
+        mundo.repo(nome)
+
+    assert rodar("--limite", "2", paralelismo=3) == 0
+
+    assert [r["full_name"] for r in repositorios(tmp_path)] == ["o/a", "o/b"]
+    assert ler(tmp_path, "funil.csv")[1][:3] == ["Candidatos examinados", "6", "2"]
+    assert interrupcoes == [True]
+
+
+def test_em_paralelo_sem_sobra_nada_e_interrompido(mundo, rodar, monkeypatch):
+    monkeypatch.setattr(principal.cliente_http, "interromper", lambda: pytest.fail("não deveria interromper"))
+    mundo.repo("o/a")
+
+    assert rodar(paralelismo=3) == 0
+
+
+def test_em_paralelo_erro_inesperado_e_propagado(mundo, rodar, monkeypatch):
+    monkeypatch.setattr(principal.cliente_http, "interromper", lambda: None)
+
+    def com_defeito(owner, repo):
+        raise KeyError("campo ausente")
+
+    monkeypatch.setattr(principal.releases, "coletar_releases", com_defeito)
+    for nome in ("o/a", "o/b", "o/c"):
+        mundo.repo(nome)
+
+    with pytest.raises(KeyError):
+        rodar(paralelismo=3)
 
 
 # repositorios.csv
@@ -410,7 +478,7 @@ def test_sem_token_encerra_com_mensagem_clara(mundo, rodar, monkeypatch, capsys)
 def test_token_e_cache_vao_para_o_cliente_http(mundo, rodar, tmp_path):
     rodar()
 
-    assert mundo.configurado == ("token-de-teste", str(tmp_path / "cache"))
+    assert mundo.configurado == ("token-de-teste", str(tmp_path / "cache"), 1)
 
 
 def test_limite_que_nao_e_inteiro_positivo_e_recusado(mundo, rodar):

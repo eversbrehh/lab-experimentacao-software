@@ -1,5 +1,7 @@
 import json
 import os
+import threading
+import time
 
 import pytest
 import requests
@@ -290,3 +292,106 @@ def test_usar_antes_de_configurar_levanta_erro(monkeypatch):
 
     with pytest.raises(RuntimeError):
         cliente_http.get_json("/repos/o/r")
+
+
+# uso concorrente
+
+
+def test_mapear_preserva_a_ordem_em_sequencia_e_em_paralelo(rede, tmp_path):
+    assert cliente_http.mapear(lambda n: n * 2, [3, 1, 2]) == [6, 2, 4]
+
+    cliente_http.configurar(TOKEN, str(tmp_path / "cache"), simultaneas=4)
+
+    assert cliente_http.mapear(lambda n: n * 2, range(20)) == [n * 2 for n in range(20)]
+    assert cliente_http.mapear(lambda n: n, []) == []
+
+
+def test_mapear_com_simultaneas_1_roda_na_propria_thread(rede):
+    assert cliente_http.mapear(lambda _: threading.current_thread(), [1, 2]) == [threading.current_thread()] * 2
+
+
+def test_mapear_propaga_a_excecao_da_funcao(rede, tmp_path):
+    cliente_http.configurar(TOKEN, str(tmp_path / "cache"), simultaneas=3)
+
+    with pytest.raises(ZeroDivisionError):
+        cliente_http.mapear(lambda n: 1 // n, [1, 0, 2])
+
+
+def test_requisicoes_em_andamento_respeitam_o_teto(monkeypatch, tmp_path):
+    em_andamento = []
+    pico = []
+    trava = threading.Lock()
+
+    def requisitar(url, cabecalhos):
+        with trava:
+            em_andamento.append(url)
+            pico.append(len(em_andamento))
+        time.sleep(0.02)
+        with trava:
+            em_andamento.remove(url)
+        return RespostaFalsa(200, {"url": url})
+
+    monkeypatch.setattr(cliente_http, "_requisitar", requisitar)
+    cliente_http.configurar(TOKEN, str(tmp_path / "cache"), simultaneas=3)
+
+    # 12 threads disputando 3 vagas
+    threads = [threading.Thread(target=cliente_http.get_json, args=(f"/repos/o/r{n}",)) for n in range(12)]
+    for thread in threads:
+        thread.start()
+    for thread in threads:
+        thread.join()
+
+    assert max(pico) == 3
+    assert len(os.listdir(tmp_path / "cache")) == 12
+
+
+def test_configurar_rejeita_teto_menor_que_1(tmp_path):
+    with pytest.raises(ValueError):
+        cliente_http.configurar(TOKEN, str(tmp_path / "cache"), simultaneas=0)
+
+
+def test_interromper_impede_novas_requisicoes_mas_nao_o_cache(rede):
+    rede.enfileirar(RespostaFalsa(200, {"a": 1}))
+    cliente_http.get_json("/repos/o/em-cache")
+
+    cliente_http.interromper()
+
+    assert cliente_http.get_json("/repos/o/em-cache") == {"a": 1}
+    with pytest.raises(cliente_http.Interrompido):
+        cliente_http.get_json("/repos/o/novo")
+    assert len(rede.chamadas) == 1
+
+
+def test_configurar_desfaz_a_interrupcao(rede, tmp_path):
+    cliente_http.interromper()
+    cliente_http.configurar(TOKEN, str(tmp_path / "cache"))
+    rede.enfileirar(RespostaFalsa(200, {"ok": 1}))
+
+    assert cliente_http.get_json("/repos/o/r") == {"ok": 1}
+
+
+def test_espera_do_limite_usa_os_cabecalhos_da_propria_resposta(rede):
+    # com várias threads, outra resposta pode ter registrado cota disponível nesse meio-tempo
+    cliente_http._registrar_cota({"x-ratelimit-remaining": "40", "x-ratelimit-reset": str(int(AGORA) + 99)})
+
+    da_resposta = {"x-ratelimit-remaining": "0", "x-ratelimit-reset": str(int(AGORA) + 10)}
+
+    assert cliente_http._espera_do_limite(da_resposta) == 11
+    assert cliente_http._espera_do_limite({"x-ratelimit-remaining": "40"}) is None
+
+
+def test_get_json_com_campos_enxuga_o_cache_e_descarta_o_resto_do_corpo(rede):
+    corpo = {
+        "total_commits": 1,
+        "files": [{"filename": "a.py", "patch": "muito texto"}],
+        "base_commit": {"sha": "x"},
+        "commits": [{"sha": "abc", "commit": {"message": "m"}, "author": {"login": "pessoa"}}],
+    }
+    rede.enfileirar(RespostaFalsa(200, corpo))
+
+    resultado = cliente_http.get_json("/repos/o/r/compare/a...b", chave="commits", campos=("sha", "commit"))
+
+    enxuto = {"total_commits": 1, "commits": [{"sha": "abc", "commit": {"message": "m"}}]}
+    assert resultado == enxuto
+    (arquivo,) = rede.pasta_cache.glob("*.json")
+    assert json.loads(arquivo.read_text(encoding="utf-8"))["corpo"] == enxuto

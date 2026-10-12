@@ -85,6 +85,8 @@ No Linux ou macOS, use `export GITHUB_TOKEN=<token>` no lugar da terceira linha.
 
 O comando examina os candidatos por estrelas decrescentes, uma faixa de `selecao.faixas_estrelas` por vez, e para no 100º repositório aprovado no funil (`selecao.alvo_aprovados` do `config.yaml`).
 
+`coleta.paralelismo` no `config.yaml` define quantos candidatos são avaliados e quantas requisições ficam em andamento ao mesmo tempo. O resultado é contabilizado na ordem de estrelas, então as saídas são as mesmas com qualquer valor; com 1, a execução é sequencial. Acima de 5 não há ganho, porque o limite passa a ser a cota de 5.000 requisições por hora do token.
+
 | Argumento | Efeito |
 |---|---|
 | `--config <arquivo>` | Obrigatório. Caminhos relativos de `caminhos` partem da pasta desse arquivo |
@@ -94,6 +96,16 @@ O comando examina os candidatos por estrelas decrescentes, uma faixa de `selecao
 Com `--repos`, todos os repositórios do arquivo são processados, a menos que `--limite` seja informado. Linhas em branco são ignoradas; uma linha fora do formato `owner/repo` encerra a execução antes de qualquer chamada; um repositório que não existe mais é descartado como "erro da API".
 
 Se a execução for interrompida (rate limit, queda de rede ou `Ctrl+C`), o mesmo comando continua de onde parou, porque as respostas já obtidas estão em `dados/cache/`. Os CSVs são gravados ao final da execução.
+
+A API devolve no máximo 1.000 workflow runs por consulta. A janela é consultada mês a mês; um mês que atinge o teto é refeito dia a dia, e um dia que atinge o teto, hora a hora. Uma hora que ainda atinge o teto fica truncada e gera um aviso no log.
+
+### Coleta dividida entre máquinas
+
+O cache guarda uma resposta da API por arquivo, com o nome derivado da URL e sem o token. Por isso a coleta pode ser dividida: cada pessoa processa uma parte da lista de candidatos com o próprio token e depois os caches são reunidos.
+
+1. Cada pessoa roda `python -m pipeline --config config.yaml --repos <sua-fatia.txt>`.
+2. Cada pessoa compacta a pasta `dados/cache/` e a envia para quem vai gerar as saídas.
+3. Quem gera as saídas copia todos os arquivos recebidos para a própria `dados/cache/` (arquivos de mesmo nome são a mesma resposta; qualquer um serve) e roda `python -m pipeline --config config.yaml`, que lê o cache e só chama a API para o que faltar.
 
 Saídas em `dados/saida/`:
 

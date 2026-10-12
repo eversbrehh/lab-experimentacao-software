@@ -1,0 +1,775 @@
+posicao,full_name,estrelas,usa_actions,deploys_janela,runs_validos_previstos,resultado
+1,codecrafters-io/build-your-own-x,552015,True,0,,menos de 5 releases
+2,sindresorhus/awesome,516347,True,0,,menos de 5 releases
+3,public-apis/public-apis,486793,True,0,,menos de 5 releases
+4,freeCodeCamp/freeCodeCamp,456723,True,0,,menos de 5 releases
+5,EbookFoundation/free-programming-books,398499,True,0,,menos de 5 releases
+6,openclaw/openclaw,391478,True,122,5000,aprovado previsto
+7,donnemartin/system-design-primer,373450,True,0,,menos de 5 releases
+8,nilbuild/developer-roadmap,368972,True,0,,menos de 5 releases
+9,jwasham/coding-interview-university,362328,True,0,,menos de 5 releases
+10,vinta/awesome-python,325934,True,0,,menos de 5 releases
+11,awesome-selfhosted/awesome-selfhosted,324712,False,,,sem Actions
+12,obra/superpowers,296569,True,14,0,menos de 50 runs
+13,practical-tutorials/project-based-learning,286108,True,0,,menos de 5 releases
+14,mattpocock/skills,281087,True,7,120,aprovado previsto
+15,996icu/996.ICU,277100,False,,,sem Actions
+16,affaan-m/ECC,275402,True,17,1235,aprovado previsto
+17,NousResearch/hermes-agent,252041,True,36,5000,aprovado previsto
+18,torvalds/linux,251274,True,0,,menos de 5 releases
+19,react/react,250753,True,28,2622,aprovado previsto
+20,trimstray/the-book-of-secret-knowledge,248584,True,0,,menos de 5 releases
+21,deepseek-ai/deepseek-harness,245689,True,0,,menos de 5 releases
+22,TheAlgorithms/Python,225096,True,0,,menos de 5 releases
+23,multica-ai/andrej-karpathy-skills,217448,True,0,,menos de 5 releases
+24,vuejs/vue,212600,True,0,,menos de 5 releases
+25,anomalyco/opencode,212200,True,468,5000,aprovado previsto
+26,ossu/computer-science,209803,True,0,,menos de 5 releases
+27,n8n-io/n8n,206729,True,257,5000,aprovado previsto
+28,DigitalPlatDev/FreeDomain,203001,False,,,sem Actions
+29,tensorflow/tensorflow,200554,True,1,,menos de 5 releases
+30,trekhleb/javascript-algorithms,196650,True,0,,menos de 5 releases
+31,yt-dlp/yt-dlp,196228,True,14,1902,aprovado previsto
+32,ultraworkers/claw-code,194991,True,0,,menos de 5 releases
+33,massgravel/Microsoft-Activation-Scripts,193626,False,,,sem Actions
+34,microsoft/vscode,193446,True,63,4113,aprovado previsto
+35,ohmyzsh/ohmyzsh,190041,True,0,,menos de 5 releases
+36,firecrawl/firecrawl,189630,True,8,2158,aprovado previsto
+37,microsoft/markitdown,189063,True,5,0,menos de 50 runs
+38,Significant-Gravitas/AutoGPT,187486,True,48,801,aprovado previsto
+39,avelino/awesome-go,187404,True,0,,menos de 5 releases
+40,jackfrued/Python-100-Days,186953,True,0,,menos de 5 releases
+41,CyC2018/CS-Notes,186180,True,0,,menos de 5 releases
+42,getify/You-Dont-Know-JS,184805,True,0,,menos de 5 releases
+43,ollama/ollama,182415,True,102,0,menos de 50 runs
+44,521xueweihan/HelloGitHub,180652,False,,,sem Actions
+45,anthropics/skills,180000,True,0,,menos de 5 releases
+46,flutter/flutter,179187,True,0,,menos de 5 releases
+47,github/gitignore,175849,True,0,,menos de 5 releases
+48,twbs/bootstrap,174794,True,0,,menos de 5 releases
+49,f/prompts.chat,172185,True,0,,menos de 5 releases
+50,huggingface/transformers,166860,True,40,4649,aprovado previsto
+51,AUTOMATIC1111/stable-diffusion-webui,165027,True,0,,menos de 5 releases
+52,jlevy/the-art-of-command-line,162393,False,,,sem Actions
+53,Snailclimb/JavaGuide,158883,True,0,,menos de 5 releases
+54,DietrichGebert/ponytail,158547,True,16,161,aprovado previsto
+55,msitarzewski/agency-agents,158338,True,0,,menos de 5 releases
+56,langgenius/dify,157931,True,23,3156,aprovado previsto
+57,langflow-ai/langflow,155402,True,41,986,aprovado previsto
+58,open-webui/open-webui,154057,True,42,280,aprovado previsto
+59,Genymobile/scrcpy,151569,True,3,,menos de 5 releases
+60,clash-verge-rev/clash-verge-rev,149805,True,10,59,aprovado previsto
+61,anthropics/claude-code,149723,True,231,5,menos de 50 runs
+62,airbnb/javascript,148097,True,0,,menos de 5 releases
+63,langchain-ai/langchain,147399,True,389,2628,aprovado previsto
+64,x1xhlol/system-prompts-and-models-of-ai-tools,143910,True,0,,menos de 5 releases
+65,vercel/next.js,143029,True,78,4383,aprovado previsto
+66,yangshun/tech-interview-handbook,142962,True,0,,menos de 5 releases
+67,farion1231/cc-switch,141367,True,44,431,aprovado previsto
+68,ytdl-org/youtube-dl,141241,True,0,,menos de 5 releases
+69,Shubhamsaboo/awesome-llm-apps,140822,True,0,,menos de 5 releases
+70,github/spec-kit,140485,True,173,2574,aprovado previsto
+71,iptv-org/iptv,140358,True,0,,menos de 5 releases
+72,ripienaar/free-for-dev,139220,True,0,,menos de 5 releases
+73,golang/go,139136,True,0,,menos de 5 releases
+74,microsoft/PowerToys,139128,True,15,797,aprovado previsto
+75,Comfy-Org/ComfyUI,136451,True,74,3252,aprovado previsto
+76,labuladong/fucking-algorithm,135898,True,0,,menos de 5 releases
+77,garrytan/gstack,135648,True,0,,menos de 5 releases
+78,nextlevelbuilder/ui-ux-pro-max-skill,133916,True,41,277,aprovado previsto
+79,excalidraw/excalidraw,133514,True,1,,menos de 5 releases
+80,ggml-org/llama.cpp,130548,True,2584,5000,aprovado previsto
+81,krahets/hello-algo,130462,True,1,,menos de 5 releases
+82,harry0703/MoneyPrinterTurbo,129196,True,11,551,aprovado previsto
+83,Chalarangelo/30-seconds-of-code,129144,True,0,,menos de 5 releases
+84,openai/codex,128211,True,131,5000,aprovado previsto
+85,kubernetes/kubernetes,128194,True,42,0,menos de 50 runs
+86,react/react-native,126602,True,28,3387,aprovado previsto
+87,rustdesk/rustdesk,125241,True,8,1299,aprovado previsto
+88,shadcn-ui/ui,125139,True,65,1300,aprovado previsto
+89,Graphify-Labs/graphify,124763,True,219,589,aprovado previsto
+90,electron/electron,123238,True,184,3090,aprovado previsto
+91,nodejs/node,122252,True,59,3524,aprovado previsto
+92,Hack-with-Github/Awesome-Hacking,121948,True,0,,menos de 5 releases
+93,microsoft/generative-ai-for-beginners,121010,True,0,,menos de 5 releases
+94,VoltAgent/awesome-design-md,119911,True,0,,menos de 5 releases
+95,rust-lang/rust,119510,True,14,1536,aprovado previsto
+96,justjavac/free-programming-books-zh_CN,119069,False,,,sem Actions
+97,godotengine/godot,118098,True,11,504,aprovado previsto
+98,2dust/v2rayN,117643,True,29,2525,aprovado previsto
+99,browser-use/browser-use,117321,True,50,2719,aprovado previsto
+100,mrdoob/three.js,116155,True,6,2067,aprovado previsto
+101,immich-app/immich,115785,True,34,2884,aprovado previsto
+102,jaywcjlove/awesome-mac,115637,True,3,,menos de 5 releases
+103,d3/d3,113722,True,0,,menos de 5 releases
+104,earendil-works/pi,113528,True,266,3147,aprovado previsto
+105,tauri-apps/tauri,111671,True,213,2648,aprovado previsto
+106,microsoft/TypeScript,111366,True,7,1135,aprovado previsto
+107,supabase/supabase,111247,True,8,3149,aprovado previsto
+108,JuliusBrussee/caveman,110586,True,42,246,aprovado previsto
+109,papers-we-love/papers-we-love,110361,True,0,,menos de 5 releases
+110,TauricResearch/TradingAgents,110288,True,12,40,menos de 50 runs
+111,openai/whisper,110163,True,0,,menos de 5 releases
+112,fatedier/frp,109783,True,9,168,aprovado previsto
+113,axios/axios,109342,True,24,759,aprovado previsto
+114,denoland/deno,108695,True,44,2563,aprovado previsto
+115,google-gemini/gemini-cli,107257,True,218,3094,aprovado previsto
+116,rasbt/LLMs-from-scratch,106230,True,0,,menos de 5 releases
+117,goldbergyoni/nodebestpractices,105654,True,0,,menos de 5 releases
+118,ruanyf/weekly,105447,False,,,sem Actions
+119,microsoft/terminal,105107,True,7,299,aprovado previsto
+120,deepseek-ai/DeepSeek-V3,104510,True,0,,menos de 5 releases
+121,pytorch/pytorch,103908,True,9,5000,aprovado previsto
+122,addyosmani/agent-skills,103406,True,13,200,aprovado previsto
+123,react/create-react-app,103225,True,0,,menos de 5 releases
+124,neovim/neovim,102915,True,9,3496,aprovado previsto
+125,fastapi/fastapi,102884,True,92,2520,aprovado previsto
+126,Anduin2017/HowToCook,102548,True,1,,menos de 5 releases
+127,angular/angular,101020,True,117,2743,aprovado previsto
+128,mtdvio/every-programmer-should-know,100525,False,,,sem Actions
+129,nexu-io/open-design,100049,True,38,2834,aprovado previsto
+130,ant-design/ant-design,99713,True,44,2648,aprovado previsto
+131,mui/material-ui,99145,True,18,2540,aprovado previsto
+132,paperclipai/paperclip,98852,True,26,3350,aprovado previsto
+133,thedotmack/claude-mem,98476,True,330,1270,aprovado previsto
+134,florinpop17/app-ideas,98014,True,0,,menos de 5 releases
+135,nvbn/thefuck,97898,True,0,,menos de 5 releases
+136,tailwindlabs/tailwindcss,97802,True,16,1085,aprovado previsto
+137,karpathy/autoresearch,97546,True,0,,menos de 5 releases
+138,microsoft/playwright,97321,True,14,5000,aprovado previsto
+139,ruvnet/RuView,96954,True,331,2979,aprovado previsto
+140,hacksider/Deep-Live-Cam,96950,True,10,26,menos de 50 runs
+141,microsoft/Web-Dev-For-Beginners,96924,True,0,,menos de 5 releases
+142,oven-sh/bun,96157,True,18,2545,aprovado previsto
+143,punkpeye/awesome-mcp-servers,95938,True,0,,menos de 5 releases
+144,puppeteer/puppeteer,95670,True,130,2339,aprovado previsto
+145,nvm-sh/nvm,95282,True,5,1180,aprovado previsto
+146,3b1b/manim,94770,True,0,,menos de 5 releases
+147,iluwatar/java-design-patterns,94767,True,0,,menos de 5 releases
+148,ryanmcdermott/clean-code-javascript,94743,False,,,sem Actions
+149,Panniantong/Agent-Reach,94151,True,7,173,aprovado previsto
+150,Leonxlnx/taste-skill,93828,True,0,,menos de 5 releases
+151,Stirling-Tools/Stirling-PDF,93818,True,50,2917,aprovado previsto
+152,localsend/localsend,93702,True,3,,menos de 5 releases
+153,sherlock-project/sherlock,93616,True,1,,menos de 5 releases
+154,vllm-project/vllm,93414,True,32,2905,aprovado previsto
+155,OpenCut-app/OpenCut,93245,True,3,,menos de 5 releases
+156,louislam/uptime-kuma,92243,True,20,2382,aprovado previsto
+157,odysseus-dev/odysseus,92202,True,0,,menos de 5 releases
+158,deepseek-ai/DeepSeek-R1,91920,True,0,,menos de 5 releases
+159,infiniflow/ragflow,91857,True,23,2490,aprovado previsto
+160,zed-industries/zed,91471,True,130,3380,aprovado previsto
+161,microsoft/ML-For-Beginners,91356,True,0,,menos de 5 releases
+162,django/django,91351,True,0,,menos de 5 releases
+163,home-assistant/core,91322,True,57,4241,aprovado previsto
+164,storybookjs/storybook,91208,True,85,2834,aprovado previsto
+165,opencv/opencv,91118,True,3,,menos de 5 releases
+166,modelcontextprotocol/servers,91082,True,8,535,aprovado previsto
+167,PaddlePaddle/PaddleOCR,90793,True,9,792,aprovado previsto
+168,mermaid-js/mermaid,90583,True,49,1878,aprovado previsto
+169,astral-sh/uv,90515,True,101,3438,aprovado previsto
+170,bitcoin/bitcoin,90328,True,11,1347,aprovado previsto
+171,ByteByteGoHq/system-design-101,90303,True,0,,menos de 5 releases
+172,OpenHands/OpenHands,90303,True,63,3090,aprovado previsto
+173,PanJiaChen/vue-element-admin,90156,False,,,sem Actions
+174,gohugoio/hugo,90068,True,42,671,aprovado previsto
+175,MunGell/awesome-for-beginners,90011,True,0,,menos de 5 releases
+176,gin-gonic/gin,89290,True,1,,menos de 5 releases
+177,syncthing/syncthing,89229,True,11,416,aprovado previsto
+178,ChatGPTNextWeb/NextChat,88835,True,0,,menos de 5 releases
+179,sveltejs/svelte,88359,True,113,2322,aprovado previsto
+180,koala73/worldmonitor,88067,True,44,2791,aprovado previsto
+181,stablyai/orca,87942,True,354,2564,aprovado previsto
+182,D4Vinci/Scrapling,86385,True,25,75,aprovado previsto
+183,Egonex-AI/Understand-Anything,85659,True,8,141,aprovado previsto
+184,laravel/laravel,85053,True,28,54,aprovado previsto
+185,unclecode/crawl4ai,85031,True,14,5,menos de 50 runs
+186,macrozheng/mall,84867,False,,,sem Actions
+187,DopplerHQ/awesome-interview-questions,84857,True,0,,menos de 5 releases
+188,bregman-arie/devops-exercises,84809,True,0,,menos de 5 releases
+189,realworld-apps/realworld,84261,True,0,,menos de 5 releases
+190,fighting41love/funNLP,83754,False,,,sem Actions
+191,Developer-Y/cs-video-courses,83643,True,0,,menos de 5 releases
+192,bytedance/deer-flow,83534,True,2,,menos de 5 releases
+193,junegunn/fzf,83458,True,14,480,aprovado previsto
+194,mlabonne/llm-course,83337,False,,,sem Actions
+195,vitejs/vite,83263,True,80,2490,aprovado previsto
+196,lobehub/lobehub,83064,True,2,,menos de 5 releases
+197,jesseduffield/lazygit,83017,True,17,1109,aprovado previsto
+198,animate-css/animate.css,82856,True,0,,menos de 5 releases
+199,rtk-ai/rtk,82718,True,85,333,aprovado previsto
+200,TapXWorld/ChinaTextbook,82651,False,,,sem Actions
+201,tonsky/FiraCode,82090,True,0,,menos de 5 releases
+202,datawhalechina/hello-agents,82060,True,3,,menos de 5 releases
+203,NationalSecurityAgency/ghidra,81745,True,10,187,aprovado previsto
+204,spring-projects/spring-boot,81575,True,24,3014,aprovado previsto
+205,swisskyrepo/PayloadsAllTheThings,81558,True,0,,menos de 5 releases
+206,d2l-ai/d2l-zh,81480,True,0,,menos de 5 releases
+207,opendatalab/MinerU,81306,True,62,186,aprovado previsto
+208,netdata/netdata,80847,True,17,2977,aprovado previsto
+209,hoppscotch/hoppscotch,80590,True,25,48,menos de 50 runs
+210,Z4nzu/hackingtool,80534,True,0,,menos de 5 releases
+211,abi/screenshot-to-code,80097,True,0,,menos de 5 releases
+212,tt-a1i/archify,80038,True,19,182,aprovado previsto
+213,anuraghazra/github-readme-stats,79822,True,0,,menos de 5 releases
+214,ventoy/Ventoy,79794,True,10,166,aprovado previsto
+215,coder/code-server,79566,True,46,337,aprovado previsto
+216,awesomedata/awesome-public-datasets,79383,False,,,sem Actions
+217,doocs/advanced-java,79141,True,0,,menos de 5 releases
+218,dair-ai/Prompt-Engineering-Guide,78906,True,0,,menos de 5 releases
+219,pbakaus/impeccable,78664,True,73,863,aprovado previsto
+220,elastic/elasticsearch,78216,True,57,2562,aprovado previsto
+221,shareAI-lab/learn-claude-code,78184,True,0,,menos de 5 releases
+222,tensorflow/models,77653,True,1,,menos de 5 releases
+223,python/cpython,77565,True,0,,menos de 5 releases
+224,caddyserver/caddy,77551,True,4,,menos de 5 releases
+225,unslothai/unsloth,77530,True,52,5000,aprovado previsto
+226,nomic-ai/gpt4all,77375,True,0,,menos de 5 releases
+227,666ghj/MiroFish,77209,True,3,,menos de 5 releases
+228,AppFlowy-IO/AppFlowy,77207,True,33,16,menos de 50 runs
+229,obsproject/obs-studio,77153,True,9,337,aprovado previsto
+230,grafana/grafana,77148,True,97,5000,aprovado previsto
+231,FortAwesome/Font-Awesome,76954,False,,,sem Actions
+232,tesseract-ocr/tesseract,76871,True,2,,menos de 5 releases
+233,nestjs/nest,76798,True,38,1533,aprovado previsto
+234,ComposioHQ/awesome-claude-skills,76710,True,0,,menos de 5 releases
+235,MisterBooo/LeetCodeAnimation,76706,True,0,,menos de 5 releases
+236,microsoft/ai-agents-for-beginners,76662,True,0,,menos de 5 releases
+237,redis/redis,76642,True,52,2237,aprovado previsto
+238,ocornut/imgui,76547,True,7,581,aprovado previsto
+239,openai/openai-cookbook,76470,True,0,,menos de 5 releases
+240,sdmg15/Best-websites-a-programmer-should-visit,76225,True,0,,menos de 5 releases
+241,PKUFlyingPig/cs-self-learning,76079,True,0,,menos de 5 releases
+242,Asabeneh/30-Days-Of-Python,75761,True,0,,menos de 5 releases
+243,typicode/json-server,75722,True,11,51,aprovado previsto
+244,hiyouga/LlamaFactory,75365,True,2,,menos de 5 releases
+245,apache/superset,75081,True,27,4667,aprovado previsto
+246,pallets/flask,74931,True,1,,menos de 5 releases
+247,Eugeny/tabby,74871,True,10,579,aprovado previsto
+248,enaqx/awesome-react,74826,True,0,,menos de 5 releases
+249,headroomlabs-ai/headroom,74762,True,172,3189,aprovado previsto
+250,binhnguyennus/awesome-scalability,74589,True,0,,menos de 5 releases
+251,josephmisiti/awesome-machine-learning,74550,True,0,,menos de 5 releases
+252,thedaviddias/Front-End-Checklist,74409,True,1,,menos de 5 releases
+253,diegosouzapw/OmniRoute,74324,True,280,34,menos de 50 runs
+254,ruvnet/ruflo,74143,True,192,4442,aprovado previsto
+255,danielmiessler/SecLists,74021,True,1,,menos de 5 releases
+256,openbq-org/OpenBB,73987,True,9,132,aprovado previsto
+257,twitter/the-algorithm,73955,True,0,,menos de 5 releases
+258,career-ops-hq/career-ops,73836,True,48,2818,aprovado previsto
+259,unionlabs/union,73757,True,3,,menos de 5 releases
+260,fffaraz/awesome-cpp,73700,True,0,,menos de 5 releases
+261,vuejs/awesome-vue,73522,True,0,,menos de 5 releases
+262,colbymchenry/codegraph,73506,True,32,16,menos de 50 runs
+263,CompVis/stable-diffusion,73488,False,,,sem Actions
+264,juliangarnier/anime,73429,True,12,0,menos de 50 runs
+265,toeverything/AFFiNE,73327,True,12,519,aprovado previsto
+266,strapi/strapi,73291,True,61,1084,aprovado previsto
+267,chrislgarry/Apollo-11,72785,True,0,,menos de 5 releases
+268,hakimel/reveal.js,72392,True,3,,menos de 5 releases
+269,nektos/act,72248,True,8,20,menos de 50 runs
+270,moby/moby,72160,True,57,3342,aprovado previsto
+271,protocolbuffers/protobuf,72101,True,17,3342,aprovado previsto
+272,prakhar1989/awesome-courses,71704,False,,,sem Actions
+273,daytonaio/daytona,71596,True,101,1711,aprovado previsto
+274,binary-husky/gpt_academic,71425,True,0,,menos de 5 releases
+275,Fission-AI/OpenSpec,71378,True,44,1171,aprovado previsto
+276,ansible/ansible,70890,True,41,0,menos de 50 runs
+277,FoundationAgents/MetaGPT,70780,True,0,,menos de 5 releases
+278,swiftlang/swift,70486,True,9,0,menos de 50 runs
+279,cline/cline,70036,True,260,3228,aprovado previsto
+280,code-yeongyu/oh-my-openagent,69898,True,316,3435,aprovado previsto
+281,tw93/Mole,69676,True,63,2975,aprovado previsto
+282,expressjs/express,69592,True,5,294,aprovado previsto
+283,microsoft/AI-For-Beginners,69578,True,0,,menos de 5 releases
+284,asgeirtj/system_prompts_leaks,69160,True,0,,menos de 5 releases
+285,BurntSushi/ripgrep,68935,True,3,,menos de 5 releases
+286,dani-garcia/vaultwarden,68701,True,14,1046,aprovado previsto
+287,docling-project/docling,68559,True,92,1363,aprovado previsto
+288,openinterpreter/openinterpreter,68532,True,24,287,aprovado previsto
+289,gorhill/uBlock,68416,True,10,0,menos de 50 runs
+290,base/node,68341,True,31,85,aprovado previsto
+291,byoungd/up,67845,True,0,,menos de 5 releases
+292,chartjs/Chart.js,67733,True,1,,menos de 5 releases
+293,labmlai/annotated_deep_learning_paper_implementations,67542,True,0,,menos de 5 releases
+294,scikit-learn/scikit-learn,67498,True,3,,menos de 5 releases
+295,apache/echarts,67466,True,1,,menos de 5 releases
+296,usestrix/strix,67319,True,29,0,menos de 50 runs
+297,shanraisshan/claude-code-best-practice,67282,True,0,,menos de 5 releases
+298,bradtraversy/design-resources-for-developers,67109,True,0,,menos de 5 releases
+299,sindresorhus/awesome-nodejs,67034,True,0,,menos de 5 releases
+300,mem0ai/mem0,66842,True,139,1052,aprovado previsto
+301,Mintplex-Labs/anything-llm,66835,True,16,455,aprovado previsto
+302,xtekky/gpt4free,66770,True,194,620,aprovado previsto
+303,leonardomso/33-js-concepts,66534,True,0,,menos de 5 releases
+304,NanmiCoder/MediaCrawler,66460,True,0,,menos de 5 releases
+305,LadybirdBrowser/ladybird,66457,True,0,,menos de 5 releases
+306,facebook/docusaurus,66440,True,4,,menos de 5 releases
+307,prometheus/prometheus,66430,True,25,3003,aprovado previsto
+308,TheAlgorithms/Java,66362,True,0,,menos de 5 releases
+309,webpack/webpack,66058,True,29,2882,aprovado previsto
+310,ZhuLinsen/daily_stock_analysis,66048,True,36,259,aprovado previsto
+311,alacritty/alacritty,65918,True,3,,menos de 5 releases
+312,rohitg00/ai-engineering-from-scratch,65878,True,4,,menos de 5 releases
+313,kelseyhightower/nocode,65873,False,,,sem Actions
+314,calesthio/OpenMontage,65498,True,0,,menos de 5 releases
+315,warpdotdev/warp,65398,True,12,2602,aprovado previsto
+316,lydiahallie/javascript-questions,65297,False,,,sem Actions
+317,kdn251/interviews,65260,False,,,sem Actions
+318,nocodb/nocodb,65216,True,25,2615,aprovado previsto
+319,localstack/localstack,65130,True,10,1826,aprovado previsto
+320,traefik/traefik,65100,True,65,545,aprovado previsto
+321,FFmpeg/FFmpeg,64872,False,,,sem Actions
+322,ryanoasis/nerd-fonts,64852,True,2,,menos de 5 releases
+323,scrapy/scrapy,64674,True,11,1805,aprovado previsto
+324,keras-team/keras,64353,True,12,2820,aprovado previsto
+325,gsd-build/get-shit-done,64345,True,67,1777,aprovado previsto
+326,rust-lang/rustlings,64304,True,0,,menos de 5 releases
+327,virattt/ai-hedge-fund,63906,True,15,0,menos de 50 runs
+328,tldr-pages/tldr,63855,True,0,,menos de 5 releases
+329,ChrisTitusTech/winutil,63853,True,23,2525,aprovado previsto
+330,commaai/openpilot,63845,True,5,2662,aprovado previsto
+331,mvanhorn/last30days-skill,63768,True,46,1727,aprovado previsto
+332,git/git,63751,True,0,,menos de 5 releases
+333,2dust/v2rayNG,63673,True,17,1042,aprovado previsto
+334,karpathy/nanoGPT,63642,False,,,sem Actions
+335,usememos/memos,63622,True,12,2636,aprovado previsto
+336,jgraph/drawio-desktop,63429,True,34,2,menos de 50 runs
+337,jingyaogong/minimind,63368,True,1,,menos de 5 releases
+338,socketio/socket.io,63214,True,29,347,aprovado previsto
+339,PlexPt/awesome-chatgpt-prompts-zh,63194,False,,,sem Actions
+340,topjohnwu/Magisk,63158,True,2,,menos de 5 releases
+341,withastro/astro,63124,True,531,3086,aprovado previsto
+342,resume/resume.github.com,62897,False,,,sem Actions
+343,upstash/context7,62810,True,111,871,aprovado previsto
+344,sansan0/TrendRadar,62745,True,0,,menos de 5 releases
+345,coollabsio/coolify,62737,True,70,509,aprovado previsto
+346,youngyangyang04/leetcode-master,62632,False,,,sem Actions
+347,remotion-dev/remotion,62559,True,168,3542,aprovado previsto
+348,RVC-Boss/GPT-SoVITS,62540,True,0,,menos de 5 releases
+349,ultralytics/ultralytics,62314,True,220,2598,aprovado previsto
+350,marktext/marktext,62262,True,2,,menos de 5 releases
+351,termux/termux-app,62227,True,0,,menos de 5 releases
+352,pathwaycom/pathway,62151,True,13,1701,aprovado previsto
+353,ghostty-org/ghostty,61981,True,0,,menos de 5 releases
+354,tw93/Pake,61945,True,21,540,aprovado previsto
+355,1c7/chinese-independent-developer,61698,True,0,,menos de 5 releases
+356,reduxjs/redux,61478,True,0,,menos de 5 releases
+357,Solido/awesome-flutter,61440,True,0,,menos de 5 releases
+358,FuelLabs/sway,61397,True,9,494,aprovado previsto
+359,lodash/lodash,61348,True,2,,menos de 5 releases
+360,minio/minio,61335,True,1,,menos de 5 releases
+361,pocketbase/pocketbase,61333,True,68,82,aprovado previsto
+362,microsoft/autogen,61312,True,0,,menos de 5 releases
+363,pi-hole/pi-hole,61210,True,8,23,menos de 50 runs
+364,nuxt/nuxt,60928,True,29,2634,aprovado previsto
+365,h5bp/Front-end-Developer-Interview-Questions,60849,True,0,,menos de 5 releases
+366,xingshaocheng/architect-awesome,60841,False,,,sem Actions
+367,penpot/penpot,60827,True,26,2649,aprovado previsto
+368,sharkdp/bat,60713,True,2,,menos de 5 releases
+369,atom/atom,60708,False,,,sem Actions
+370,makeplane/plane,60550,True,10,1904,aprovado previsto
+371,BerriAI/litellm,60394,True,394,4163,aprovado previsto
+372,spring-projects/spring-framework,60281,True,18,2015,aprovado previsto
+373,adam-p/markdown-here,60262,False,,,sem Actions
+374,starship/starship,60188,True,6,570,aprovado previsto
+375,rclone/rclone,60185,True,16,1280,aprovado previsto
+376,CorentinJ/Real-Time-Voice-Cloning,60173,True,0,,menos de 5 releases
+377,jquery/jquery,59891,True,1,,menos de 5 releases
+378,rust-unofficial/awesome-rust,59726,True,0,,menos de 5 releases
+379,FiloSottile/mkcert,59722,True,0,,menos de 5 releases
+380,meta-llama/llama,59624,True,0,,menos de 5 releases
+381,shadowsocks/shadowsocks-windows,59542,True,0,,menos de 5 releases
+382,tiimgreen/github-cheat-sheet,59527,False,,,sem Actions
+383,meilisearch/meilisearch,59523,True,61,1637,aprovado previsto
+384,MemPalace/mempalace,59484,True,18,719,aprovado previsto
+385,crewAIInc/crewAI,59476,True,62,2601,aprovado previsto
+386,heygen-com/hyperframes,59194,True,406,3089,aprovado previsto
+387,pathwaycom/llm-app,58819,True,0,,menos de 5 releases
+388,rails/rails,58809,True,18,2649,aprovado previsto
+389,pmndrs/zustand,58801,True,7,761,aprovado previsto
+390,Raphire/Win11Debloat,58709,True,27,25,menos de 50 runs
+391,FoundationAgents/OpenManus,58574,True,0,,menos de 5 releases
+392,karpathy/nanochat,58493,True,0,,menos de 5 releases
+393,angular/angular.js,58486,False,,,sem Actions
+394,go-gitea/gitea,58372,True,17,2626,aprovado previsto
+395,hugohe3/ppt-master,58326,True,33,246,aprovado previsto
+396,ultralytics/yolov5,58117,True,0,,menos de 5 releases
+397,twentyhq/twenty,58102,True,74,5000,aprovado previsto
+398,jellyfin/jellyfin,57922,True,14,2640,aprovado previsto
+399,wasabeef/awesome-android-ui,57870,False,,,sem Actions
+400,scutan90/DeepLearning-500-questions,57653,False,,,sem Actions
+401,h5bp/html5-boilerplate,57642,True,0,,menos de 5 releases
+402,appwrite/appwrite,57600,True,10,1012,aprovado previsto
+403,deepfakes/faceswap,57571,True,2,,menos de 5 releases
+404,zylon-ai/private-gpt,57562,True,2,,menos de 5 releases
+405,Textualize/rich,57489,True,7,2,menos de 50 runs
+406,Alishahryar1/free-claude-code,56991,True,34,810,aprovado previsto
+407,Zie619/n8n-workflows,56921,True,0,,menos de 5 releases
+408,soimort/you-get,56866,True,0,,menos de 5 releases
+409,FuelLabs/fuel-core,56807,True,8,223,aprovado previsto
+410,ageitgey/face_recognition,56806,True,0,,menos de 5 releases
+411,golang-standards/project-layout,56679,True,0,,menos de 5 releases
+412,jamiepine/voicebox,56677,True,25,81,aprovado previsto
+413,laurent22/joplin,56635,True,11,2869,aprovado previsto
+414,remix-run/react-router,56598,True,33,1246,aprovado previsto
+415,typst/typst,56495,True,5,648,aprovado previsto
+416,firstcontributions/first-contributions,56263,True,0,,menos de 5 releases
+417,agalwood/Motrix,56203,True,0,,menos de 5 releases
+418,gatsbyjs/gatsby,55938,True,2,,menos de 5 releases
+419,Lordog/dive-into-llms,55904,False,,,sem Actions
+420,ayghri/i-have-adhd,55795,True,0,,menos de 5 releases
+421,azl397985856/leetcode,55728,True,0,,menos de 5 releases
+422,PowerShell/PowerShell,55643,True,23,1518,aprovado previsto
+423,TryGhost/Ghost,55501,True,98,2966,aprovado previsto
+424,FlowiseAI/Flowise,55495,True,10,1254,aprovado previsto
+425,debpalash/VoiceStudio,55306,True,41,2569,aprovado previsto
+426,ngosang/trackerslist,55303,True,0,,menos de 5 releases
+427,hesreallyhim/awesome-claude-code,55273,True,0,,menos de 5 releases
+428,romkatv/powerlevel10k,55213,False,,,sem Actions
+429,freqtrade/freqtrade,55147,True,16,2633,aprovado previsto
+430,aaif-goose/goose,55092,True,73,4627,aprovado previsto
+431,AntonOsika/gpt-engineer,55045,True,0,,menos de 5 releases
+432,WerWolv/ImHex,55025,True,2,,menos de 5 releases
+433,facebookresearch/segment-anything,54974,True,0,,menos de 5 releases
+434,blader/humanizer,54950,True,6,27,menos de 50 runs
+435,odoo/odoo,54919,True,0,,menos de 5 releases
+436,chen08209/FlClash,54859,True,9,3,menos de 50 runs
+437,microsoft/VibeVoice,54686,True,0,,menos de 5 releases
+438,wagoodman/dive,54628,True,0,,menos de 5 releases
+439,lencx/ChatGPT,54592,True,0,,menos de 5 releases
+440,vuejs/core,54589,True,20,774,aprovado previsto
+441,eternity4719/HowToLiveBetter,54570,True,1,,menos de 5 releases
+442,router-for-me/CLIProxyAPI,54520,True,744,0,menos de 50 runs
+443,psf/requests,54505,True,5,442,aprovado previsto
+444,lyswhut/lx-music-desktop,54288,True,7,10,menos de 50 runs
+445,maybe-finance/maybe,54241,True,0,,menos de 5 releases
+446,ggml-org/whisper.cpp,54233,True,12,1200,aprovado previsto
+447,google/material-design-icons,54086,True,0,,menos de 5 releases
+448,ElemeFE/element,54028,True,0,,menos de 5 releases
+449,bannedbook/fanqiang,54003,True,0,,menos de 5 releases
+450,mozilla/pdf.js,53989,True,12,2849,aprovado previsto
+451,bmad-code-org/BMAD-METHOD,53956,True,27,1213,aprovado previsto
+452,coreyhaines31/marketingskills,53769,True,45,110,aprovado previsto
+453,chinese-poetry/chinese-poetry,53589,True,0,,menos de 5 releases
+454,dockur/windows,53571,True,18,34,menos de 50 runs
+455,vsouza/awesome-ios,53558,True,0,,menos de 5 releases
+456,necolas/normalize.css,53506,False,,,sem Actions
+457,JetBrains/kotlin,53487,True,8,0,menos de 50 runs
+458,lllyasviel/Fooocus,53337,True,0,,menos de 5 releases
+459,anthropics/claude-cookbooks,53282,True,0,,menos de 5 releases
+460,ChromeDevTools/chrome-devtools-mcp,53130,True,49,2917,aprovado previsto
+461,jesseduffield/lazydocker,53075,True,5,20,menos de 50 runs
+462,VoltAgent/awesome-openclaw-skills,53001,True,0,,menos de 5 releases
+463,bojieli/ai-agent-book,52979,True,0,,menos de 5 releases
+464,sickcodes/Docker-OSX,52960,True,0,,menos de 5 releases
+465,ionic-team/ionic-framework,52689,True,40,267,aprovado previsto
+466,expo/expo,52604,True,146,3916,aprovado previsto
+467,CherryHQ/cherry-studio,52466,True,60,2612,aprovado previsto
+468,dkhamsing/open-source-ios-apps,52463,True,0,,menos de 5 releases
+469,poteto/hiring-without-whiteboards,52457,True,0,,menos de 5 releases
+470,run-llama/llama_index,52445,True,20,2648,aprovado previsto
+471,prettier/prettier,52413,True,20,2608,aprovado previsto
+472,etcd-io/etcd,52344,True,32,1312,aprovado previsto
+473,xai-org/grok-1,52231,True,0,,menos de 5 releases
+474,multica-ai/multica,52206,True,161,2638,aprovado previsto
+475,dbeaver/dbeaver,51981,True,24,2528,aprovado previsto
+476,google/guava,51922,True,4,,menos de 5 releases
+477,Avik-Jain/100-Days-Of-ML-Code,51906,False,,,sem Actions
+478,HKUDS/CLI-Anything,51756,True,3,,menos de 5 releases
+479,jekyll/jekyll,51706,True,0,,menos de 5 releases
+480,charlax/professional-programming,51611,False,,,sem Actions
+481,DefinitelyTyped/DefinitelyTyped,51454,True,0,,menos de 5 releases
+482,ethereum/go-ethereum,51391,True,13,899,aprovado previsto
+483,justjavac/wechat-miniapp-radar,51195,True,0,,menos de 5 releases
+484,roboflow/supervision,51157,True,13,2548,aprovado previsto
+485,elder-plinius/CL4R1T4S,51041,False,,,sem Actions
+486,cypress-io/cypress,51037,True,30,0,menos de 50 runs
+487,Semantic-Org/Semantic-UI,51020,False,,,sem Actions
+488,Imbad0202/academic-research-skills,50941,True,45,1165,aprovado previsto
+489,tldraw/tldraw,50822,True,51,3088,aprovado previsto
+490,skylot/jadx,50783,True,3,,menos de 5 releases
+491,nlohmann/json,50745,True,0,,menos de 5 releases
+492,chenglou/pretext,50726,True,0,,menos de 5 releases
+493,serhii-londar/open-source-mac-os-apps,50696,True,0,,menos de 5 releases
+494,apple/container,50585,True,20,527,aprovado previsto
+495,TanStack/query,50406,True,1469,2528,aprovado previsto
+496,mastodon/mastodon,50357,True,64,2720,aprovado previsto
+497,kelseyhightower/kubernetes-the-hard-way,50317,False,,,sem Actions
+498,upscayl/upscayl,50308,True,0,,menos de 5 releases
+499,ClickHouse/ClickHouse,50303,True,201,5000,aprovado previsto
+500,AlistGo/alist,50268,True,11,194,aprovado previsto
+501,moeru-ai/airi,50196,True,36,3392,aprovado previsto
+502,jakevdp/PythonDataScienceHandbook,50121,False,,,sem Actions
+503,jgthms/bulma,50047,True,0,,menos de 5 releases
+504,huginn/huginn,50030,True,5,147,aprovado previsto
+505,Homebrew/brew,49956,True,69,2642,aprovado previsto
+506,pandas-dev/pandas,49939,True,7,3313,aprovado previsto
+507,astral-sh/ruff,49938,True,48,2818,aprovado previsto
+508,NARKOZ/hacker-scripts,49846,False,,,sem Actions
+509,tmux/tmux,49846,True,8,0,menos de 50 runs
+510,hashicorp/terraform,49843,True,27,1198,aprovado previsto
+511,x64dbg/x64dbg,49744,True,2,,menos de 5 releases
+512,team-spotube/spotube,49717,True,3,,menos de 5 releases
+513,GokuMohandas/Made-With-ML,49705,True,1,,menos de 5 releases
+514,metabase/metabase,49584,True,144,5000,aprovado previsto
+515,bigskysoftware/htmx,49544,True,7,100,aprovado previsto
+516,mudler/LocalAI,49440,True,48,4090,aprovado previsto
+517,QuantumNous/new-api,49436,True,194,2,menos de 50 runs
+518,Aider-AI/aider,49426,True,0,,menos de 5 releases
+519,lukasz-madon/awesome-remote-job,49309,True,0,,menos de 5 releases
+520,kepano/obsidian-skills,49297,True,0,,menos de 5 releases
+521,DovAmir/awesome-design-patterns,49257,False,,,sem Actions
+522,microsoft/qlib,49220,True,0,,menos de 5 releases
+523,akullpp/awesome-java,49198,True,0,,menos de 5 releases
+524,bilawalsidhu/gods-eye-view,49190,True,2,,menos de 5 releases
+525,JuliaLang/julia,49189,True,14,1892,aprovado previsto
+526,slidevjs/slidev,48983,True,37,1172,aprovado previsto
+527,calcom/cal.diy,48920,True,70,4126,aprovado previsto
+528,nilbuild/design-patterns-for-humans,48900,False,,,sem Actions
+529,algorithm-visualizer/algorithm-visualizer,48885,False,,,sem Actions
+530,HKUDS/nanobot,48876,True,20,1316,aprovado previsto
+531,bevyengine/bevy,48722,True,7,3632,aprovado previsto
+532,DavidHDev/react-bits,48704,True,0,,menos de 5 releases
+533,KeygraphHQ/shannon,48684,True,27,0,menos de 50 runs
+534,iamkun/dayjs,48668,True,5,43,menos de 50 runs
+535,brillout/awesome-react-components,48562,True,0,,menos de 5 releases
+536,type-challenges/type-challenges,48541,True,0,,menos de 5 releases
+537,pixijs/pixijs,48315,True,14,462,aprovado previsto
+538,ReactiveX/RxJava,48190,True,20,1158,aprovado previsto
+539,jeecgboot/JeecgBoot,48113,True,6,0,menos de 50 runs
+540,GitHubDaily/GitHubDaily,48109,False,,,sem Actions
+541,K-Dense-AI/scientific-agent-skills,48051,True,107,197,aprovado previsto
+542,karan/Projects,47985,False,,,sem Actions
+543,discourse/discourse,47943,True,0,,menos de 5 releases
+544,moment/moment,47902,True,2,,menos de 5 releases
+545,SimplifyJobs/Summer2027-Internships,47901,True,0,,menos de 5 releases
+546,nvm-windows/nvm,47885,True,1,,menos de 5 releases
+547,gogs/gogs,47861,True,5,811,aprovado previsto
+548,exo-explore/exo,47791,True,11,559,aprovado previsto
+549,acmesh-official/acme.sh,47789,True,5,572,aprovado previsto
+550,abhigyanpatwari/GitNexus,47780,True,26,2641,aprovado previsto
+551,minimaxir/big-list-of-naughty-strings,47730,False,,,sem Actions
+552,oobabooga/textgen,47727,True,31,0,menos de 50 runs
+553,prisma/orm,47696,True,23,1503,aprovado previsto
+554,hiroi-sora/Umi-OCR,47690,False,,,sem Actions
+555,MHSanaei/3x-ui,47660,True,31,2612,aprovado previsto
+556,dypsilon/frontend-dev-bookmarks,47593,False,,,sem Actions
+557,usebruno/bruno,47406,True,29,3452,aprovado previsto
+558,slab/quill,47379,True,0,,menos de 5 releases
+559,sickn33/agentic-awesome-skills,47366,True,222,2888,aprovado previsto
+560,vectorize-io/hindsight,47296,True,71,1424,aprovado previsto
+561,zhayujie/CowAgent,47288,True,21,2127,aprovado previsto
+562,apache/airflow,47125,True,21,2557,aprovado previsto
+563,gedoor/legado,47111,True,0,,menos de 5 releases
+564,typescript-cheatsheets/react,47093,True,0,,menos de 5 releases
+565,lysine-dev/okhttp,47090,True,0,,menos de 5 releases
+566,9001/copyparty,46935,True,32,0,menos de 50 runs
+567,serverless/serverless,46922,True,40,374,aprovado previsto
+568,v2ray/v2ray-core,46922,True,0,,menos de 5 releases
+569,Asabeneh/30-Days-Of-JavaScript,46896,False,,,sem Actions
+570,microsoft/monaco-editor,46847,True,5,197,aprovado previsto
+571,iina/iina,46699,True,4,,menos de 5 releases
+572,siyuan-note/siyuan,46683,True,34,27,menos de 50 runs
+573,Yuan1z0825/nature-skills,46648,True,0,,menos de 5 releases
+574,jgm/pandoc,46629,True,11,996,aprovado previsto
+575,cli/cli,46576,True,28,1549,aprovado previsto
+576,LeCoupa/awesome-cheatsheets,46538,True,0,,menos de 5 releases
+577,helix-editor/helix,46518,True,0,,menos de 5 releases
+578,docker/awesome-compose,46487,True,0,,menos de 5 releases
+579,karanpratapsingh/system-design,46480,False,,,sem Actions
+580,DIYgod/RSSHub,46460,True,0,,menos de 5 releases
+581,zhongyang219/TrafficMonitor,46455,True,1,,menos de 5 releases
+582,paperless-ngx/paperless-ngx,46406,True,35,2544,aprovado previsto
+583,cathrynlavery/diagram-design,46364,True,0,,menos de 5 releases
+584,milvus-io/milvus,46342,True,41,1351,aprovado previsto
+585,RocketChat/Rocket.Chat,46232,True,101,2969,aprovado previsto
+586,DeusData/codebase-memory-mcp,46167,True,45,2522,aprovado previsto
+587,coqui-ai/TTS,46109,True,0,,menos de 5 releases
+588,ziishaned/learn-regex,46096,False,,,sem Actions
+589,DataTalksClub/data-engineering-zoomcamp,46074,True,0,,menos de 5 releases
+590,fastapi/full-stack-fastapi-template,45927,True,5,1304,aprovado previsto
+591,streamlit/streamlit,45922,True,20,2862,aprovado previsto
+592,files-community/Files,45863,True,15,663,aprovado previsto
+593,android/architecture-samples,45854,True,0,,menos de 5 releases
+594,google/zx,45783,True,1,,menos de 5 releases
+595,vnpy/vnpy,45763,True,3,,menos de 5 releases
+596,Leaflet/Leaflet,45715,True,0,,menos de 5 releases
+597,ColorlibHQ/AdminLTE,45640,True,23,494,aprovado previsto
+598,jestjs/jest,45554,True,7,464,aprovado previsto
+599,getsentry/sentry,45512,True,22,4729,aprovado previsto
+600,LibreChat-AI/LibreChat,45421,True,0,,menos de 5 releases
+601,grpc/grpc,45366,True,12,1553,aprovado previsto
+602,isocpp/CppCoreGuidelines,45365,True,0,,menos de 5 releases
+603,charmbracelet/bubbletea,45351,True,11,191,aprovado previsto
+604,mitmproxy/mitmproxy,45349,True,4,,menos de 5 releases
+605,MadsLorentzen/ai-job-search,45313,True,10,229,aprovado previsto
+606,juspay/hyperswitch,45297,True,12,4028,aprovado previsto
+607,logseq/logseq,45183,True,2,,menos de 5 releases
+608,payloadcms/payload,45157,True,50,1665,aprovado previsto
+609,pyenv/pyenv,45126,True,34,649,aprovado previsto
+610,GitSquared/edex-ui,45045,True,0,,menos de 5 releases
+611,react-hook-form/react-hook-form,44870,True,31,394,aprovado previsto
+612,janhq/jan,44856,True,15,306,aprovado previsto
+613,sudheerj/reactjs-interview-questions,44850,True,0,,menos de 5 releases
+614,zen-browser/desktop,44835,True,67,626,aprovado previsto
+615,meteor/meteor,44797,True,18,266,aprovado previsto
+616,imputnet/cobalt,44781,True,0,,menos de 5 releases
+617,vercel/hyper,44735,True,0,,menos de 5 releases
+618,spf13/cobra,44699,True,1,,menos de 5 releases
+619,sharkdp/fd,44681,True,4,,menos de 5 releases
+620,NaiboWang/EasySpider,44665,True,1,,menos de 5 releases
+621,alibaba/open-code-review,44591,True,135,1157,aprovado previsto
+622,AykutSarac/jsoncrack.com,44477,True,1,,menos de 5 releases
+623,juanfont/headscale,44451,True,8,1468,aprovado previsto
+624,emilkowalski/skills,44424,False,,,sem Actions
+625,DataExpert-io/data-engineer-handbook,44397,False,,,sem Actions
+626,mifi/lossless-cut,44371,True,6,219,aprovado previsto
+627,omacom/omarchy,44303,True,34,0,menos de 50 runs
+628,ccxt/ccxt,44287,True,80,3862,aprovado previsto
+629,Kong/kong,44253,True,2,,menos de 5 releases
+630,danielmiessler/Fabric,44187,True,175,411,aprovado previsto
+631,apache/spark,44148,True,0,,menos de 5 releases
+632,babel/babel,44138,True,19,693,aprovado previsto
+633,colinhacks/zod,44077,True,26,866,aprovado previsto
+634,reactive-resume/reactive-resume,44014,True,46,1445,aprovado previsto
+635,parcel-bundler/parcel,44010,True,3,,menos de 5 releases
+636,yangshun/front-end-interview-handbook,44008,True,0,,menos de 5 releases
+637,streamich/react-use,43997,True,1,,menos de 5 releases
+638,ray-project/ray,43993,True,16,0,menos de 50 runs
+639,lysine-dev/retrofit,43934,True,0,,menos de 5 releases
+640,astaxie/build-web-application-with-golang,43885,False,,,sem Actions
+641,zbezj/HEU_KMS_Activator,43857,False,,,sem Actions
+642,chatanywhere/GPT_API_free,43816,False,,,sem Actions
+643,aymericdamien/TensorFlow-Examples,43740,True,0,,menos de 5 releases
+644,gradio-app/gradio,43687,True,945,2882,aprovado previsto
+645,vercel-labs/agent-browser,43686,True,110,1062,aprovado previsto
+646,HeyPuter/puter,43669,True,17,2989,aprovado previsto
+647,Light-City/CPlusPlusThings,43506,False,,,sem Actions
+648,Wei-Shaw/sub2api,43503,True,55,2796,aprovado previsto
+649,alex/what-happens-when,43338,True,0,,menos de 5 releases
+650,ziglang/zig,43303,True,0,,menos de 5 releases
+651,Unitech/pm2,43300,True,6,15,menos de 50 runs
+652,deepspeedai/DeepSpeed,43209,True,18,577,aprovado previsto
+653,curl/curl,43134,True,6,4424,aprovado previsto
+654,faif/python-patterns,43042,True,0,,menos de 5 releases
+655,aria2/aria2,42991,True,0,,menos de 5 releases
+656,herdrdev/herdr,42984,True,59,2607,aprovado previsto
+657,FuelLabs/fuels-rs,42982,True,3,,menos de 5 releases
+658,FuelLabs/fuels-ts,42943,True,2,,menos de 5 releases
+659,langchain-ai/langgraph,42915,True,160,1620,aprovado previsto
+660,sxyazi/yazi,42702,True,6,1663,aprovado previsto
+661,mingrammer/diagrams,42693,True,2,,menos de 5 releases
+662,agno-agi/agno,42618,True,128,1483,aprovado previsto
+663,gkd-kit/gkd,42610,True,8,138,aprovado previsto
+664,freefq/free,42605,False,,,sem Actions
+665,k88hudson/git-flight-rules,42594,False,,,sem Actions
+666,apachecn/ailearning,42565,False,,,sem Actions
+667,saadeghi/daisyui,42556,True,121,453,aprovado previsto
+668,Alamofire/Alamofire,42401,True,6,20,menos de 50 runs
+669,exelban/stats,42401,True,49,282,aprovado previsto
+670,666ghj/BettaFish,42361,True,5,0,menos de 50 runs
+671,fastlane/fastlane,42215,True,19,536,aprovado previsto
+672,ashishps1/awesome-system-design-resources,42107,False,,,sem Actions
+673,LC044/WeChatMsg,42095,False,,,sem Actions
+674,XTLS/Xray-core,42004,True,5,1787,aprovado previsto
+675,LizardByte/Sunshine,41997,True,3,,menos de 5 releases
+676,duckdb/duckdb,41991,True,12,0,menos de 50 runs
+677,chatboxai/chatbox,41978,True,17,0,menos de 50 runs
+678,nolimits4web/swiper,41905,False,,,sem Actions
+679,psf/black,41882,True,7,1978,aprovado previsto
+680,tabler/tabler,41831,True,4,,menos de 5 releases
+681,chubin/cheat.sh,41793,True,0,,menos de 5 releases
+682,luongnv89/claude-howto,41778,True,10,303,aprovado previsto
+683,hexojs/hexo,41776,True,3,,menos de 5 releases
+684,dylanaraps/pure-bash-bible,41711,False,,,sem Actions
+685,tinyhumansai/openhuman,41690,True,61,3600,aprovado previsto
+686,dcloudio/uni-app,41615,True,0,,menos de 5 releases
+687,apache/dubbo,41582,True,3,,menos de 5 releases
+688,AstrBotDevs/AstrBot,41568,True,124,2663,aprovado previsto
+689,yarnpkg/yarn,41468,True,0,,menos de 5 releases
+690,hpcaitech/ColossalAI,41441,True,0,,menos de 5 releases
+691,goabstract/Awesome-Design-Tools,41434,True,0,,menos de 5 releases
+692,GyulyVGC/sniffnet,41364,True,3,,menos de 5 releases
+693,ManimCommunity/manim,41359,True,5,426,aprovado previsto
+694,QSCTech/zju-icicles,41192,True,0,,menos de 5 releases
+695,vim/vim,41156,True,0,,menos de 5 releases
+696,nwjs/nw.js,41145,False,,,sem Actions
+697,facebookresearch/faiss,41115,True,9,712,aprovado previsto
+698,styled-components/styled-components,41092,True,23,406,aprovado previsto
+699,codewhale-hq/Codewhale,41083,True,138,3446,aprovado previsto
+700,ToolJet/ToolJet,41052,True,223,52,aprovado previsto
+701,appsmithorg/appsmith,41040,True,20,326,aprovado previsto
+702,vuetifyjs/vuetify,41032,True,64,796,aprovado previsto
+703,bailicangdu/vue2-elm,40995,True,0,,menos de 5 releases
+704,llvm/llvm-project,40977,True,18,3499,aprovado previsto
+705,HKUDS/DeepTutor,40950,True,84,310,aprovado previsto
+706,zai-org/ChatGLM-6B,40931,False,,,sem Actions
+707,PatrickJS/awesome-cursorrules,40894,True,0,,menos de 5 releases
+708,remoteintech/remote-jobs,40883,True,0,,menos de 5 releases
+709,outline/outline,40845,True,18,2572,aprovado previsto
+710,CorentinTh/it-tools,40791,True,0,,menos de 5 releases
+711,trpc/trpc,40687,True,20,820,aprovado previsto
+712,qbittorrent/qBittorrent,40681,True,5,2578,aprovado previsto
+713,chakra-ui/chakra-ui,40676,True,56,601,aprovado previsto
+714,bradtraversy/50projects50days,40652,False,,,sem Actions
+715,nushell/nushell,40638,True,14,2451,aprovado previsto
+716,pingcap/tidb,40633,True,6,1586,aprovado previsto
+717,JustVugg/colibri,40577,True,19,108,aprovado previsto
+718,schollz/croc,40532,True,49,289,aprovado previsto
+719,php/php-src,40434,True,39,2202,aprovado previsto
+720,phaserjs/phaser,40432,True,4,,menos de 5 releases
+721,wg/wrk,40416,True,0,,menos de 5 releases
+722,microsoft/BitNet,40373,True,0,,menos de 5 releases
+723,shiyu-coder/Kronos,40319,True,0,,menos de 5 releases
+724,wshobson/agents,40305,True,0,,menos de 5 releases
+725,datalab-to/marker,40291,True,2,,menos de 5 releases
+726,photoprism/photoprism,40278,True,6,0,menos de 50 runs
+727,zhaoxuya520/reverse-skill,40266,True,1,,menos de 5 releases
+728,gofiber/fiber,40200,True,12,2635,aprovado previsto
+729,PostHog/posthog,40194,True,2674,5000,aprovado previsto
+730,THU-MAIC/OpenMAIC,40188,True,15,986,aprovado previsto
+731,koalaman/shellcheck,40151,True,0,,menos de 5 releases
+732,novuhq/novu,40133,True,83,2890,aprovado previsto
+733,vadimdemedes/ink,40073,True,15,164,aprovado previsto
+734,evanw/esbuild,40070,True,13,140,aprovado previsto
+735,google-research/bert,40043,False,,,sem Actions
+736,Kong/insomnia,40034,True,15,2689,aprovado previsto
+737,HKUDS/LightRAG,40021,True,28,2549,aprovado previsto
+738,pola-rs/polars,40020,True,32,2888,aprovado previsto
+739,TeamNewPipe/NewPipe,39992,True,10,203,aprovado previsto
+740,go-gorm/gorm,39982,True,2,,menos de 5 releases
+741,ajeetdsouza/zoxide,39981,True,2,,menos de 5 releases
+742,lfnovo/open-notebook,39969,True,25,768,aprovado previsto
+743,aseprite/aseprite,39951,True,11,207,aprovado previsto
+744,ShareX/ShareX,39934,True,5,813,aprovado previsto
+745,siddharthvaddem/openscreen,39932,True,13,229,aprovado previsto
+746,halo-dev/halo,39930,True,30,783,aprovado previsto
+747,frappe/erpnext,39918,True,184,1301,aprovado previsto
+748,videojs/video.js,39914,True,2,,menos de 5 releases
+749,2noise/ChatTTS,39895,True,1,,menos de 5 releases
+750,drawdb-io/drawdb,39852,True,0,,menos de 5 releases
+751,github/awesome-copilot,39820,True,0,,menos de 5 releases
+752,mindsdb/mindshub,39786,True,12,34,menos de 50 runs
+753,Yeachan-Heo/oh-my-claudecode,39702,True,248,378,aprovado previsto
+754,google/styleguide,39658,True,0,,menos de 5 releases
+755,google/googletest,39632,True,1,,menos de 5 releases
+756,YunaiV/ruoyi-vue-pro,39592,True,26,152,aprovado previsto
+757,The-Vibe-Company/quivr,39577,True,0,,menos de 5 releases
+758,floodsung/Deep-Learning-Papers-Reading-Roadmap,39568,False,,,sem Actions
+759,lm-sys/FastChat,39552,True,0,,menos de 5 releases
+760,freeCodeCamp/devdocs,39540,True,0,,menos de 5 releases
+761,google/leveldb,39480,True,0,,menos de 5 releases
+762,volcengine/OpenViking,39439,True,88,2882,aprovado previsto
+763,DioxusLabs/dioxus,39348,True,11,456,aprovado previsto
+764,deepseek-ai/awesome-deepseek-integration,39337,True,0,,menos de 5 releases
+765,Crosstalk-Solutions/project-nomad,39317,True,49,6,menos de 50 runs
+766,mattermost/mattermost,39297,True,90,2965,aprovado previsto
+767,suno-ai/bark,39270,False,,,sem Actions
+768,umami-software/umami,39252,True,12,53,aprovado previsto
+769,bytedance/UI-TARS-desktop,39219,True,1,,menos de 5 releases
+770,rapid7/metasploit-framework,39114,True,0,,menos de 5 releases
+771,spacedriveapp/spacedrive,39084,True,0,,menos de 5 releases
+772,RSSNext/Folo,39074,True,43,2839,aprovado previsto
+773,anthropics/financial-services,39055,True,0,,menos de 5 releases
+774,VectifyAI/PageIndex,38998,True,13,230,aprovado previsto

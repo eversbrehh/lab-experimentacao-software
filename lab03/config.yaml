@@ -20,6 +20,11 @@ selecao:
     - "2000..5000"
     - "1000..2000"
 
+coleta:
+  # Candidatos avaliados e requisições em andamento ao mesmo tempo. Acima de 5 não há
+  # ganho: o limite passa a ser a cota de 5.000 requisições por hora do token.
+  paralelismo: 5
+
 caminhos:
   cache: dados/cache
   saida: dados/saida

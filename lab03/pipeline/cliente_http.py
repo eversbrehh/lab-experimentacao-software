@@ -4,6 +4,9 @@
 salva em `<pasta_cache>/<sha256 da URL>.json`; rodar de novo o mesmo comando reaproveita
 o que já foi baixado. O token vai só no cabeçalho `Authorization`, nunca na chave nem no
 arquivo do cache.
+
+O módulo pode ser usado por várias threads: `configurar` define quantas requisições podem
+estar em andamento ao mesmo tempo e `mapear` distribui o trabalho respeitando esse teto.
 """
 
 import hashlib
@@ -12,7 +15,9 @@ import logging
 import os
 import re
 import tempfile
+import threading
 import time
+from concurrent.futures import ThreadPoolExecutor
 from urllib.parse import parse_qsl, urlencode, urlsplit, urlunsplit
 
 import requests
@@ -32,9 +37,15 @@ CABECALHOS_GUARDADOS = (
 
 log = logging.getLogger(__name__)
 
-_estado = {"token": None, "pasta": None, "restantes": None, "reset": None}
-_dormir = time.sleep
+_estado = {"token": None, "pasta": None, "restantes": None, "reset": None, "simultaneas": 1}
+_trava_da_cota = threading.Lock()
+_vagas = threading.BoundedSemaphore(1)
+_interrompido = threading.Event()
 _agora = time.time
+
+
+def _dormir(segundos: float) -> None:
+    _interrompido.wait(segundos)  # acorda antes se a execução for interrompida
 
 
 class ErroHTTP(Exception):
@@ -45,18 +56,60 @@ class ErroHTTP(Exception):
         self.status = status
 
 
-def configurar(token: str, pasta_cache: str) -> None:
-    _estado.update(token=token, pasta=pasta_cache, restantes=None, reset=None)
+class Interrompido(Exception):
+    """A execução foi interrompida por `interromper`; nenhuma nova requisição é feita."""
 
 
-def get_json(caminho: str, params: dict | None = None) -> dict | list | None:
-    """Corpo JSON da resposta; `None` quando o recurso não existe (404)."""
-    return get_com_cabecalhos(caminho, params)[0]
+def configurar(token: str, pasta_cache: str, simultaneas: int = 1) -> None:
+    """Define o token, a pasta do cache e o teto de requisições em andamento ao mesmo tempo."""
+    global _vagas
+    if simultaneas < 1:
+        raise ValueError("simultaneas deve ser ao menos 1")
+    _estado.update(token=token, pasta=pasta_cache, restantes=None, reset=None, simultaneas=simultaneas)
+    _vagas = threading.BoundedSemaphore(simultaneas)
+    _interrompido.clear()
 
 
-def get_com_cabecalhos(caminho: str, params: dict | None = None) -> tuple[dict | list | None, dict]:
+def interromper() -> None:
+    """Faz as threads em andamento pararem na próxima requisição ou espera."""
+    _interrompido.set()
+
+
+def mapear(funcao, itens) -> list:
+    """`[funcao(item) for item in itens]`, na mesma ordem, em até `simultaneas` threads.
+
+    Com `simultaneas = 1` roda em sequência, na própria thread. A primeira exceção de
+    `funcao` é propagada.
+    """
+    itens = list(itens)
+    threads = min(_estado["simultaneas"], len(itens))
+    if threads <= 1:
+        return [funcao(item) for item in itens]
+    with ThreadPoolExecutor(max_workers=threads) as executor:
+        return list(executor.map(funcao, itens))
+
+
+def get_json(
+    caminho: str,
+    params: dict | None = None,
+    chave: str | None = None,
+    campos: tuple[str, ...] | None = None,
+) -> dict | list | None:
+    """Corpo JSON da resposta; `None` quando o recurso não existe (404).
+
+    `chave` e `campos` enxugam o corpo como em `get_paginado`.
+    """
+    return get_com_cabecalhos(caminho, params, chave, campos)[0]
+
+
+def get_com_cabecalhos(
+    caminho: str,
+    params: dict | None = None,
+    chave: str | None = None,
+    campos: tuple[str, ...] | None = None,
+) -> tuple[dict | list | None, dict]:
     """Corpo JSON e cabeçalhos (em minúsculas: link, x-ratelimit-*, retry-after)."""
-    return _obter(_url_canonica(caminho, params))
+    return _obter(_url_canonica(caminho, params), _redutor(chave, campos))
 
 
 def get_paginado(
@@ -70,14 +123,15 @@ def get_paginado(
     Com `chave`, os itens estão em `corpo[chave]` (ex.: `workflow_runs`); sem ela, o
     corpo de cada página já é uma lista. Cada página é cacheada separadamente.
 
-    Com `campos`, cada item fica só com essas chaves, no cache e no resultado. Serve para
+    Com `campos`, cada item fica só com essas chaves, no cache e no resultado; do
+    restante do corpo sobram apenas os valores simples (ex.: `total_count`). Serve para
     respostas volumosas: uma página de 100 workflow runs passa de 4 MB, porque cada run
     traz o repositório inteiro embutido.
     """
     params = dict(params or {})
     params.setdefault("per_page", 100)
     url = _url_canonica(caminho, params)
-    reduzir = (lambda corpo: _so_campos(corpo, chave, campos)) if campos else None
+    reduzir = _redutor(chave, campos)
     itens = []
     while url:
         corpo, cabecalhos = _obter(url, reduzir)
@@ -88,10 +142,15 @@ def get_paginado(
     return itens
 
 
+def _redutor(chave: str | None, campos: tuple[str, ...] | None):
+    return (lambda corpo: _so_campos(corpo, chave, campos)) if campos else None
+
+
 def _so_campos(corpo, chave: str | None, campos: tuple[str, ...]):
     if chave is None:
         return [{campo: item.get(campo) for campo in campos} for item in corpo]
-    return {**corpo, chave: [{campo: item.get(campo) for campo in campos} for item in corpo[chave]]}
+    simples = {nome: valor for nome, valor in corpo.items() if not isinstance(valor, (dict, list))}
+    return {**simples, chave: [{campo: item.get(campo) for campo in campos} for item in corpo[chave]]}
 
 
 def _requisitar(url: str, cabecalhos: dict):
@@ -155,19 +214,23 @@ def _cabecalhos_requisicao() -> dict:
 
 def _registrar_cota(cabecalhos: dict) -> None:
     restantes, reset = cabecalhos.get("x-ratelimit-remaining"), cabecalhos.get("x-ratelimit-reset")
-    _estado["restantes"] = int(restantes) if restantes is not None else None
-    _estado["reset"] = int(reset) if reset is not None else None
+    with _trava_da_cota:
+        _estado["restantes"] = int(restantes) if restantes is not None else None
+        _estado["reset"] = int(reset) if reset is not None else None
 
 
 def _esperar_cota() -> None:
     """Se a última resposta zerou a cota, espera o reset antes de gastar outra chamada."""
-    if _estado["restantes"] == 0 and _estado["reset"] is not None:
-        _esperar(_segundos_ate_reset(), "cota da API esgotada")
-    _estado["restantes"] = None
+    with _trava_da_cota:
+        esgotada = _estado["restantes"] == 0 and _estado["reset"] is not None
+        espera = _segundos_ate(_estado["reset"]) if esgotada else None
+        _estado["restantes"] = None
+    if espera is not None:
+        _esperar(espera, "cota da API esgotada")
 
 
-def _segundos_ate_reset() -> float:
-    return max(0, _estado["reset"] - _agora()) + MARGEM_RESET
+def _segundos_ate(reset: int) -> float:
+    return max(0, reset - _agora()) + MARGEM_RESET
 
 
 def _esperar(segundos: float, motivo: str) -> None:
@@ -176,11 +239,15 @@ def _esperar(segundos: float, motivo: str) -> None:
 
 
 def _espera_do_limite(cabecalhos: dict) -> float | None:
-    """Segundos a esperar após um 403/429 de limite; `None` se não for rate limit."""
+    """Segundos a esperar após um 403/429 de limite; `None` se não for rate limit.
+
+    Usa os cabeçalhos da própria resposta: com várias threads, a cota guardada em
+    `_estado` pode já ter sido atualizada por outra requisição.
+    """
     if "retry-after" in cabecalhos:
         return float(cabecalhos["retry-after"])
-    if _estado["restantes"] == 0 and _estado["reset"] is not None:
-        return _segundos_ate_reset()
+    if cabecalhos.get("x-ratelimit-remaining") == "0" and "x-ratelimit-reset" in cabecalhos:
+        return _segundos_ate(int(cabecalhos["x-ratelimit-reset"]))
     return None
 
 
@@ -199,8 +266,11 @@ def _obter(url: str, reduzir=None):
     esperas_de_limite = 0
     while True:
         _esperar_cota()
+        if _interrompido.is_set():
+            raise Interrompido()
         try:
-            resposta = _requisitar(url, _cabecalhos_requisicao())
+            with _vagas:
+                resposta = _requisitar(url, _cabecalhos_requisicao())
         except requests.RequestException:
             status = 0
         else:
@@ -220,7 +290,8 @@ def _obter(url: str, reduzir=None):
                 if espera is None or esperas_de_limite > MAX_ESPERAS_DE_LIMITE:
                     raise ErroHTTP(status)
                 _esperar(espera, f"limite de requisições (HTTP {status})")
-                _estado["restantes"] = None  # a espera já cobriu o reset
+                with _trava_da_cota:
+                    _estado["restantes"] = None  # a espera já cobriu o reset
                 continue
             if status < 500:
                 raise ErroHTTP(status)

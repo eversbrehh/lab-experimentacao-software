@@ -21,8 +21,8 @@ def carregar(caminho: str) -> dict:
     """Conteúdo do `config.yaml`, com a janela em `date` e o token em `config["token"]`.
 
     Caminhos relativos de `caminhos` são resolvidos a partir da pasta do arquivo de
-    configuração. Levanta `ErroDeConfiguracao` se o arquivo, uma chave obrigatória ou o
-    token estiverem ausentes.
+    configuração. `coleta.paralelismo` é opcional e vale 1 quando ausente. Levanta
+    `ErroDeConfiguracao` se o arquivo, uma chave obrigatória ou o token estiverem ausentes.
     """
     try:
         with open(caminho, encoding="utf-8") as arquivo:
@@ -50,6 +50,12 @@ def carregar(caminho: str) -> dict:
     if not isinstance(faixas, list) or not faixas:
         raise ErroDeConfiguracao("selecao.faixas_estrelas deve ser uma lista com ao menos uma faixa")
     selecao["faixas_estrelas"] = [str(faixa) for faixa in faixas]
+
+    coleta = config.setdefault("coleta", {})
+    if not isinstance(coleta, dict):
+        raise ErroDeConfiguracao("coleta deve ser um mapeamento")
+    coleta.setdefault("paralelismo", 1)
+    _inteiro_positivo(coleta, "coleta", "paralelismo")
 
     caminhos = _secao(config, "caminhos")
     pasta = os.path.dirname(os.path.abspath(caminho))

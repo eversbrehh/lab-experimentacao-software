@@ -4,6 +4,10 @@ Encadeia seleção, coleta e métricas. Os candidatos são examinados por estrel
 decrescentes e a execução para no N-ésimo aprovado no funil. As respostas da API ficam no
 cache, então repetir o comando depois de uma interrupção continua de onde parou.
 
+Com `coleta.paralelismo` maior que 1, vários candidatos são avaliados ao mesmo tempo, mas
+o resultado é contabilizado na ordem de estrelas: as saídas são as mesmas da execução em
+sequência.
+
 Saídas em `caminhos.saida`: `funil.csv` e `repositorios.csv`. Com `--repos`, os arquivos
 são `funil_subamostra.csv` e `repositorios_subamostra.csv`, para não sobrescrever os da
 amostra.
@@ -15,7 +19,8 @@ import logging
 import os
 import re
 import sys
-from collections import Counter
+from collections import Counter, deque
+from concurrent.futures import ThreadPoolExecutor
 
 from metricas.cfr import cfr_ci
 from metricas.classificacao import classificar
@@ -65,7 +70,7 @@ def main(argv: list[str] | None = None) -> int:
         print(f"erro: {erro}", file=sys.stderr)
         return 1
 
-    cliente_http.configurar(cfg["token"], cfg["caminhos"]["cache"])
+    cliente_http.configurar(cfg["token"], cfg["caminhos"]["cache"], cfg["coleta"]["paralelismo"])
     try:
         executar(cfg, args.limite, pares)
     except KeyboardInterrupt:
@@ -97,8 +102,7 @@ def executar(cfg: dict, limite: int | None = None, pares: list[tuple[str, str]] 
 
     motivos = Counter()
     linhas = []
-    for item in candidatos:
-        motivo, linha = _avaliar(item, cfg)
+    for item, motivo, linha in _avaliar_em_ordem(candidatos, cfg, cfg["coleta"]["paralelismo"]):
         motivos[motivo] += 1
         nome = item["full_name"] if isinstance(item, dict) else "/".join(item)
         if linha is None:
@@ -226,6 +230,37 @@ def _candidatos_da_busca(faixas: list[str], contagem: dict):
         contagem["buscados"] += len(novos)
         log.info("faixa de estrelas %s: %d candidatos", faixa, len(novos))
         yield from novos
+
+
+def _avaliar_em_ordem(candidatos, cfg: dict, paralelismo: int):
+    """Gera `(item, motivo, linha)` na ordem dos candidatos, avaliando até `paralelismo` por vez.
+
+    Os candidatos são tirados da fonte só quando há vaga, então a busca continua sob
+    demanda. Se quem consome parar antes do fim (limite atingido, erro ou `Ctrl+C`), as
+    avaliações que sobraram são interrompidas e seus resultados, descartados.
+    """
+    if paralelismo <= 1:
+        for item in candidatos:
+            yield (item, *_avaliar(item, cfg))
+        return
+
+    executor = ThreadPoolExecutor(max_workers=paralelismo)
+    em_andamento = deque()
+    try:
+        for item in candidatos:
+            em_andamento.append((item, executor.submit(_avaliar, item, cfg)))
+            if len(em_andamento) >= paralelismo:
+                primeiro, futuro = em_andamento.popleft()
+                yield (primeiro, *futuro.result())
+        while em_andamento:
+            primeiro, futuro = em_andamento.popleft()
+            yield (primeiro, *futuro.result())
+    finally:
+        if em_andamento:
+            for _, futuro in em_andamento:
+                futuro.cancel()
+            cliente_http.interromper()
+        executor.shutdown(wait=True)
 
 
 def _avaliar(item, cfg: dict) -> tuple[str | None, dict | None]:

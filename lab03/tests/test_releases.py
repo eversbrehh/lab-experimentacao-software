@@ -1,3 +1,4 @@
+import json
 from datetime import date, datetime, timezone
 
 import pytest
@@ -133,6 +134,33 @@ def test_data_da_tag_com_commit_inexistente_levanta_erro(rede):
 
     with pytest.raises(LookupError):
         releases.data_da_tag("o", "r", "abc123")
+
+
+def _corpos_no_cache(tmp_path):
+    return [json.loads(a.read_text(encoding="utf-8"))["corpo"] for a in (tmp_path / "cache").glob("*.json")]
+
+
+def test_cache_de_releases_guarda_so_os_campos_usados(rede, tmp_path):
+    bruta = {**release_bruta("v1", "2026-01-01T00:00:00Z"), "body": "notas longas", "assets": [{"size": 1}]}
+    rede.fila.append(RespostaFalsa(200, [bruta]))
+
+    releases.coletar_releases("o", "r")
+
+    (corpo,) = _corpos_no_cache(tmp_path)
+    assert set(corpo[0]) == {"tag_name", "published_at", "draft", "prerelease", "html_url"}
+
+
+def test_cache_do_compare_descarta_o_diff_dos_arquivos(rede, tmp_path):
+    corpo = {"total_commits": 1, "files": [{"patch": "diff enorme"}], "commits": [{**commit_bruto(1), "author": {}}]}
+    rede.fila.append(RespostaFalsa(200, corpo))
+
+    resultado = releases.commits_entre("o", "r", "v1", "v2")
+
+    assert [c["sha"] for c in resultado] == ["sha0001"]
+    (no_cache,) = _corpos_no_cache(tmp_path)
+    assert set(no_cache) == {"total_commits", "commits"}
+    assert set(no_cache["commits"][0]) == {"sha", "commit"}
+    assert len(rede.urls) == 1  # a conferência do 404 e a paginação usam a mesma página
 
 
 # commits_entre
@@ -308,3 +336,24 @@ def test_limites_da_janela_sao_fechados(comparacoes):
 
 def test_sem_releases_devolve_vazio(comparacoes):
     assert releases.releases_com_commits("o", "r", [], INICIO, FIM) == ([], 0)
+
+
+def test_releases_com_commits_em_paralelo_da_o_mesmo_resultado(monkeypatch):
+    lista = [release(f"v{i}", utc(2026, 1, i + 1)) for i in range(12)]
+    lista.insert(0, release("v-antiga", utc(2024, 1, 1)))
+
+    def falso_commits_entre(owner, repo, base, head):
+        if head == "v5":
+            return None  # compare com 404
+        return [{"sha": head, "data": utc(2025, 12, 1), "mensagem": f"{base}...{head}"}]
+
+    monkeypatch.setattr(releases, "commits_entre", falso_commits_entre)
+    monkeypatch.setitem(cliente_http._estado, "simultaneas", 1)
+    em_sequencia = releases.releases_com_commits("o", "r", lista, INICIO, FIM)
+
+    monkeypatch.setitem(cliente_http._estado, "simultaneas", 6)
+    em_paralelo = releases.releases_com_commits("o", "r", lista, INICIO, FIM)
+
+    assert em_paralelo == em_sequencia
+    assert [r["tag_name"] for r in em_paralelo[0]] == [f"v{i}" for i in range(12)]
+    assert em_paralelo[1] == 1

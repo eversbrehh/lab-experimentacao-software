@@ -72,6 +72,21 @@ def test_demais_valores_sao_mantidos(tmp_path, com_token):
     assert cfg["selecao"]["faixas_estrelas"] == [">10000", "5000..10000"]
 
 
+def test_paralelismo_ausente_vale_1(tmp_path, com_token):
+    assert config.carregar(gravar(tmp_path))["coleta"] == {"paralelismo": 1}
+
+
+def test_paralelismo_do_arquivo_e_mantido(tmp_path, com_token):
+    cfg = config.carregar(gravar(tmp_path, VALIDO + "coleta:\n  paralelismo: 5\n"))
+
+    assert cfg["coleta"]["paralelismo"] == 5
+
+
+def test_paralelismo_que_nao_e_inteiro_positivo_e_rejeitado(tmp_path, com_token):
+    with pytest.raises(ErroDeConfiguracao, match="coleta.paralelismo"):
+        config.carregar(gravar(tmp_path, VALIDO + "coleta:\n  paralelismo: 0\n"))
+
+
 def test_caminhos_relativos_partem_da_pasta_do_config(tmp_path, com_token):
     cfg = config.carregar(gravar(tmp_path))
 

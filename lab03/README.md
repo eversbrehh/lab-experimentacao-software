@@ -17,6 +17,7 @@ Board do grupo: [Kanban](https://github.com/users/gabialvarenga/projects/9)
 | Documento | Descrição |
 |---|---|
 | [docs/planejamento.md](docs/planejamento.md) | Calendário, decisões, Issues e fluxo das sprints 01 a 03 |
+| [docs/protocolo-rotulagem.md](docs/protocolo-rotulagem.md) | Critérios de rotulagem da amostra-ouro, regras de cegamento e regra de consenso |
 
 ## Estrutura
 

@@ -51,6 +51,7 @@ lab03/
         saida/             # funil.csv, repositorios.csv e o dataset final (versionados)
         rotulagem/         # planilhas da amostra-ouro e consenso (Sprint 02)
     analise/               # um notebook ou script por RQ, reexecutável a partir do CSV (Sprint 03)
+        sorteio.py         # sorteio da amostra-ouro e planilhas de rotulagem              (S02-04)
     artigo/                # template SBC (Sociedade Brasileira de Computação)
         main.tex
         secoes/            # introducao.tex, hipoteses-rq01-rq04.tex, hipoteses-rq05-rq08.tex, ...
@@ -70,6 +71,7 @@ Regras da estrutura:
 | `config.py` é o único ponto de leitura do `config.yaml` e do token; os demais módulos recebem os valores como parâmetros | Os módulos são testáveis sem arquivo de configuração nem variável de ambiente |
 | `dados/cache/`, o token e os arquivos de compilação do LaTeX ficam fora do Git (`.gitignore`) | O token nunca é commitado (seção 7) e o repositório guarda só o que o grupo replicador usa |
 | Análises da Sprint 03 leem apenas `dados/saida/` | Cada análise é reexecutável a partir do CSV, sem nova coleta (seção 10) |
+| Exceção: `analise/sorteio.py` lê `dados/cache/` e o `config.yaml` por conta própria, sem importar `pipeline/` | O sorteio precisa das listas de releases, que não estão em `dados/saida/`, e roda sem token, que `config.py` exige. Um teste confere que ele lê o cache como `cliente_http.py` grava |
 
 ## Execução
 
@@ -142,6 +144,32 @@ Colunas do `repositorios.csv`, uma linha por repositório aprovado. Decimais usa
 | `n_episodios`, `n_censurados_direita`, `n_censurados_esquerda` | Episódios de falha e quantos são censurados |
 | `categoria_c1` | Classificação DORA com `frequencia_semana`, `lead_time_a_h`, `cfr_a` e `recuperacao_mediana_h` |
 | `n_metricas_classificadas` | Métricas definidas que entraram na classificação (até 4) |
+
+## Amostra-ouro
+
+```powershell
+cd lab03
+python -m analise.sorteio --fila dados/amostra/amostra_prevista.csv
+```
+
+O comando sorteia 60 repositórios e 5 reservas da fila congelada e 5 deploys da janela de cada um, com a semente 42 fixa em `analise/sorteio.py`. Ele não usa o token nem a rede: as listas de releases são lidas de `dados/cache/`, então só roda na máquina que tem o cache da coleta, e encerra com uma mensagem se faltar a lista de algum sorteado.
+
+| Argumento | Efeito |
+|---|---|
+| `--fila <arquivo>` | Obrigatório. CSV com a coluna `full_name`; só as 300 primeiras linhas entram no sorteio |
+| `--config <arquivo>` | Config do pipeline, de onde saem a janela e a pasta do cache. Padrão: `config.yaml` |
+| `--aprovados <arquivo>` | CSV com a coluna `full_name` (ex.: `dados/saida/repositorios.csv`). Sorteado ausente dele é trocado pela primeira reserva livre, sem novo sorteio |
+| `--saida <pasta>` | Pasta das saídas. Padrão: `dados/rotulagem` |
+| `--sobrescrever` | Grava mesmo se as saídas já existirem. Sem ele, o comando se recusa, porque regravar uma planilha apaga os rótulos preenchidos |
+
+Saídas em `dados/rotulagem/`:
+
+| Arquivo | Conteúdo |
+|---|---|
+| `amostra_ouro.csv` | Uma linha por release sorteada dos 65 repositórios (325 linhas): `ordem_sorteio`, `papel`, `full_name`, `tag_name`, `published_at`, `url_release` e `url_compare` |
+| `avaliador_1.xlsx` a `avaliador_3.xlsx` | Os 60 repositórios da amostra (aba `repositorios`) e suas 300 releases (aba `releases`), com as colunas e os valores aceitos do [protocolo de rotulagem](docs/protocolo-rotulagem.md) |
+
+`papel` é `amostra` ou `reserva`. Com `--aprovados`, o sorteado que saiu da amostra fica como `substituído`, e a reserva que também saiu, como `descartado`; os dois ficam com uma única linha, sem release, e suas releases não são lidas do cache. `url_compare` compara a release com o deploy anterior e fica vazia na primeira release da história do repositório.
 
 ## Testes
 

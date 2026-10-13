@@ -49,6 +49,8 @@ lab03/
     dados/
         cache/             # respostas da API, uma por arquivo (não versionado)
         saida/             # funil.csv, repositorios.csv e o dataset final (versionados)
+        amostra/           # amostra prevista pela sondagem, fatias da coleta e reservas (Sprint 02)
+        coleta/            # registro da coleta de cada fatia, por integrante (Sprint 02)
         rotulagem/         # planilhas da amostra-ouro e consenso (Sprint 02)
     analise/               # um notebook ou script por RQ, reexecutável a partir do CSV (Sprint 03)
         sorteio.py         # sorteio da amostra-ouro e planilhas de rotulagem              (S02-04)

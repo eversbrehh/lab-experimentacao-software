@@ -8,6 +8,8 @@ lab02/trials/**/exemplo-*/
 
 # Lab03: cache da API e artefatos de compilação do LaTeX
 lab03/dados/cache/
+# Saídas do `--repos`: são regravadas a cada execução; o registro de cada fatia fica em dados/coleta/
+lab03/dados/saida/*_subamostra.csv
 lab03/artigo/*.aux
 lab03/artigo/*.log
 lab03/artigo/*.out

@@ -1,0 +1,6 @@
+etapa,entrada,saida,motivo
+Candidatos examinados,5620,712,não examinado (parada no 300º aprovado)
+Com GitHub Actions,712,642,sem Actions
+Coleta sem erro,642,642,erro da API
+Releases na janela,642,346,menos de 5 releases
+Runs válidos na janela,346,300,menos de 50 runs

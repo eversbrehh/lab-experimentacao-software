@@ -139,5 +139,5 @@ def test_config_do_projeto_e_valido(com_token):
 
     cfg = config.carregar(os.path.join(raiz, "config.yaml"))
 
-    assert cfg["selecao"]["alvo_aprovados"] == 100
+    assert cfg["selecao"]["alvo_aprovados"] == 300
     assert cfg["caminhos"]["saida"] == os.path.join(raiz, "dados", "saida")

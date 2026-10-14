@@ -1,0 +1,6 @@
+etapa,entrada,saida,motivo
+Candidatos examinados,99,99,não examinado
+Com GitHub Actions,99,99,sem Actions
+Coleta sem erro,99,99,erro da API
+Releases na janela,99,99,menos de 5 releases
+Runs válidos na janela,99,99,menos de 50 runs

@@ -102,6 +102,8 @@ Com `--repos`, todos os repositórios do arquivo são processados, a menos que `
 
 Se a execução for interrompida (rate limit, queda de rede ou `Ctrl+C`), o mesmo comando continua de onde parou, porque as respostas já obtidas estão em `dados/cache/`. Os CSVs são gravados ao final da execução.
 
+Se a rede cair, o pipeline não descarta repositórios: ele espera a conexão voltar, com novas tentativas a cada 60 segundos, por até 6 horas. Passado esse tempo, encerra com erro e sem gravar as saídas; o mesmo comando continua pelo cache. O motivo "erro da API" no funil fica reservado a respostas de erro do GitHub.
+
 A API devolve no máximo 1.000 workflow runs por consulta. A janela é consultada mês a mês; um mês que atinge o teto é refeito dia a dia, e um dia que atinge o teto, hora a hora. Uma hora que ainda atinge o teto fica truncada e gera um aviso no log.
 
 ### Coleta dividida entre máquinas

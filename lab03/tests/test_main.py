@@ -495,3 +495,23 @@ def test_falha_na_busca_encerra_com_mensagem(mundo, rodar, monkeypatch, capsys):
     assert rodar() == 1
 
     assert "busca" in capsys.readouterr().err
+
+
+# queda de rede
+
+
+@pytest.mark.parametrize("paralelismo", [None, 3])
+def test_sem_conexao_encerra_sem_gravar_saidas_nem_descartar(mundo, rodar, tmp_path, monkeypatch, capsys, paralelismo):
+    monkeypatch.setattr(principal.cliente_http, "interromper", lambda: None)
+
+    def sem_rede(owner, repo):
+        raise principal.cliente_http.SemConexao("sem conexão com a API há 21600 s")
+
+    monkeypatch.setattr(principal.releases, "coletar_releases", sem_rede)
+    for nome in ("o/a", "o/b", "o/c"):
+        mundo.repo(nome)
+
+    assert rodar(paralelismo=paralelismo) == 1
+
+    assert "sem conexão" in capsys.readouterr().err
+    assert not (tmp_path / "saida").exists()

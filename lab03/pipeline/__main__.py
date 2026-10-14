@@ -76,6 +76,12 @@ def main(argv: list[str] | None = None) -> int:
     except KeyboardInterrupt:
         print("\ninterrompido; rode o mesmo comando para continuar pelo cache", file=sys.stderr)
         return 130
+    except cliente_http.SemConexao as erro:
+        print(
+            f"erro: {erro}; nenhuma saída foi gravada. Rode o mesmo comando para continuar pelo cache",
+            file=sys.stderr,
+        )
+        return 1
     except cliente_http.ErroHTTP as erro:
         print(
             f"erro: a busca de candidatos falhou ({erro}); rode o mesmo comando para continuar pelo cache",
@@ -269,6 +275,8 @@ def _avaliar(item, cfg: dict) -> tuple[str | None, dict | None]:
     `item` é um candidato da busca ou um par `(owner, repo)` de `--repos`. A coleta segue
     a ordem que gasta menos chamadas: Actions, releases, runs e só então metadados e
     commits. `ErroHTTP` em qualquer etapa descarta o repositório sem interromper a execução.
+    `SemConexao` não é capturada aqui: falta de rede não é erro do repositório, então ela
+    encerra a execução sem gravar as saídas.
     """
     inicio, fim = cfg["janela"]["inicio"], cfg["janela"]["fim"]
     min_releases = cfg["criterios"]["min_releases"]

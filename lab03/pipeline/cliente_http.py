@@ -25,6 +25,10 @@ import requests
 BASE_URL = "https://api.github.com"
 TIMEOUT = 30
 ESPERAS_5XX = (1, 2, 4, 8)
+# Sem conexão (rede ou DNS fora do ar): a espera cresce até 60 s e se repete até a rede
+# voltar ou até o total chegar ao máximo.
+ESPERAS_SEM_CONEXAO = (1, 2, 4, 8, 15, 30, 60)
+ESPERA_MAXIMA_SEM_CONEXAO = 6 * 60 * 60
 MAX_ESPERAS_DE_LIMITE = 5
 MARGEM_RESET = 1
 CABECALHOS_GUARDADOS = (
@@ -54,6 +58,14 @@ class ErroHTTP(Exception):
     def __init__(self, status: int):
         super().__init__(f"HTTP {status}")
         self.status = status
+
+
+class SemConexao(Exception):
+    """A rede não voltou dentro de `ESPERA_MAXIMA_SEM_CONEXAO`.
+
+    Não é `ErroHTTP`: a falha não diz nada sobre o recurso pedido, então quem chama não
+    deve tratá-la como erro da API para aquele repositório.
+    """
 
 
 class Interrompido(Exception):
@@ -264,6 +276,8 @@ def _obter(url: str, reduzir=None):
 
     falhas_5xx = 0
     esperas_de_limite = 0
+    tentativas_sem_conexao = 0
+    segundos_sem_conexao = 0
     while True:
         _esperar_cota()
         if _interrompido.is_set():
@@ -271,6 +285,16 @@ def _obter(url: str, reduzir=None):
         try:
             with _vagas:
                 resposta = _requisitar(url, _cabecalhos_requisicao())
+        except requests.ConnectionError:
+            # Sem rede: espera a conexão voltar em vez de desistir do recurso. Sem isso, uma
+            # queda de minutos faria cada repositório da fila ser descartado como erro da API.
+            espera = ESPERAS_SEM_CONEXAO[min(tentativas_sem_conexao, len(ESPERAS_SEM_CONEXAO) - 1)]
+            if segundos_sem_conexao + espera > ESPERA_MAXIMA_SEM_CONEXAO:
+                raise SemConexao(f"sem conexão com a API há {segundos_sem_conexao} s") from None
+            _esperar(espera, "sem conexão com a API")
+            tentativas_sem_conexao += 1
+            segundos_sem_conexao += espera
+            continue
         except requests.RequestException:
             status = 0
         else:
@@ -296,7 +320,7 @@ def _obter(url: str, reduzir=None):
             if status < 500:
                 raise ErroHTTP(status)
 
-        # 5xx ou falha de conexão: backoff exponencial 1 s, 2 s, 4 s, 8 s
+        # 5xx ou resposta interrompida (ex.: tempo esgotado): backoff exponencial 1 s, 2 s, 4 s, 8 s
         if falhas_5xx >= len(ESPERAS_5XX):
             raise ErroHTTP(status)
         _esperar(ESPERAS_5XX[falhas_5xx], f"erro temporário (HTTP {status})")

@@ -105,7 +105,7 @@ def test_5xx_persistente_usa_backoff_exponencial_e_falha(rede):
     assert list(rede.pasta_cache.glob("*.json")) == []
 
 
-def test_erro_de_conexao_e_repetido_como_5xx(rede):
+def test_erro_de_conexao_e_repetido(rede):
     rede.enfileirar(requests.ConnectionError("caiu"), RespostaFalsa(200, {"ok": 1}))
 
     assert cliente_http.get_json("/repos/o/r") == {"ok": 1}
@@ -395,3 +395,50 @@ def test_get_json_com_campos_enxuga_o_cache_e_descarta_o_resto_do_corpo(rede):
     assert resultado == enxuto
     (arquivo,) = rede.pasta_cache.glob("*.json")
     assert json.loads(arquivo.read_text(encoding="utf-8"))["corpo"] == enxuto
+
+
+# queda de rede
+
+
+def test_sem_conexao_espera_a_rede_voltar_em_vez_de_desistir(rede):
+    quedas = [requests.ConnectionError("sem rede") for _ in range(10)]
+    rede.enfileirar(*quedas, RespostaFalsa(200, {"ok": 1}))
+
+    assert cliente_http.get_json("/repos/o/r") == {"ok": 1}
+    assert rede.esperas == [1, 2, 4, 8, 15, 30, 60, 60, 60, 60]
+
+
+def test_sem_conexao_alem_do_maximo_levanta_sem_conexao(rede, monkeypatch):
+    monkeypatch.setattr(cliente_http, "ESPERA_MAXIMA_SEM_CONEXAO", 20)
+    rede.enfileirar(*[requests.ConnectionError("sem rede") for _ in range(10)])
+
+    with pytest.raises(cliente_http.SemConexao):
+        cliente_http.get_json("/repos/o/r")
+
+    assert rede.esperas == [1, 2, 4, 8]  # 15 s a mais passaria de 20 s
+
+
+def test_sem_conexao_nao_e_erro_http():
+    assert not issubclass(cliente_http.SemConexao, ErroHTTP)
+
+
+def test_queda_de_rede_nao_consome_as_tentativas_de_erro_temporario(rede):
+    rede.enfileirar(
+        RespostaFalsa(502),
+        *[requests.ConnectionError("sem rede") for _ in range(6)],
+        RespostaFalsa(502),
+        RespostaFalsa(200, {"ok": 1}),
+    )
+
+    assert cliente_http.get_json("/repos/o/r") == {"ok": 1}
+    assert rede.esperas == [1, 1, 2, 4, 8, 15, 30, 2]
+
+
+def test_tempo_esgotado_continua_sendo_erro_temporario(rede):
+    rede.enfileirar(*[requests.Timeout("demorou") for _ in range(5)])
+
+    with pytest.raises(ErroHTTP) as erro:
+        cliente_http.get_json("/repos/o/r")
+
+    assert erro.value.status == 0
+    assert rede.esperas == [1, 2, 4, 8]

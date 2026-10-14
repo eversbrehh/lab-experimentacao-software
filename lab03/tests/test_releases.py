@@ -24,22 +24,28 @@ class RespostaFalsa:
 
 
 class Rede:
-    """Respostas da API em fila; registra as URLs pedidas."""
+    """Respostas da API em fila; registra as URLs pedidas e o corpo dos POST."""
 
     def __init__(self):
         self.fila = []
         self.urls = []
+        self.envios = []
 
     def requisitar(self, url, cabecalhos):
         self.urls.append(url)
         assert self.fila, f"chamada inesperada à rede: {url}"
         return self.fila.pop(0)
 
+    def postar(self, url, cabecalhos, envio):
+        self.envios.append(envio)
+        return self.requisitar(url, cabecalhos)
+
 
 @pytest.fixture
 def rede(monkeypatch, tmp_path):
     falsa = Rede()
     monkeypatch.setattr(cliente_http, "_requisitar", falsa.requisitar)
+    monkeypatch.setattr(cliente_http, "_postar", falsa.postar)
     cliente_http.configurar("token-de-teste", str(tmp_path / "cache"))
     return falsa
 
@@ -122,11 +128,36 @@ def test_coletar_tags_devolve_nome_e_sha(rede):
     assert releases.coletar_tags("o", "r") == [{"name": "v1.0.0", "sha": "abc123"}]
 
 
+def test_cache_de_tags_guarda_so_nome_e_commit(rede, tmp_path):
+    rede.fila.append(
+        RespostaFalsa(200, [{"name": "v1", "commit": {"sha": "abc", "url": "x"}, "zipball_url": "y", "node_id": "z"}])
+    )
+
+    releases.coletar_tags("o", "r")
+
+    (corpo,) = _corpos_no_cache(tmp_path)
+    assert set(corpo[0]) == {"name", "commit"}
+
+
+def git_commit_bruto(data):
+    """Corpo de `/git/commits/{sha}`: a data fica em `author`, no nível de cima."""
+    return {"sha": "abc123", "author": {"name": "a", "date": data}, "tree": {"sha": "t"}, "message": "m"}
+
+
 def test_data_da_tag_usa_a_data_do_commit_apontado(rede):
-    rede.fila.append(RespostaFalsa(200, commit_bruto(1, "2026-02-03T04:05:06Z")))
+    rede.fila.append(RespostaFalsa(200, git_commit_bruto("2026-02-03T04:05:06Z")))
 
     assert releases.data_da_tag("o", "r", "abc123") == utc(2026, 2, 3, 4).replace(minute=5, second=6)
-    assert rede.urls == ["https://api.github.com/repos/o/r/commits/abc123"]
+    assert rede.urls == ["https://api.github.com/repos/o/r/git/commits/abc123"]
+
+
+def test_cache_de_data_da_tag_guarda_so_o_autor(rede, tmp_path):
+    rede.fila.append(RespostaFalsa(200, git_commit_bruto("2026-02-03T04:05:06Z")))
+
+    releases.data_da_tag("o", "r", "abc123")
+
+    (corpo,) = _corpos_no_cache(tmp_path)
+    assert set(corpo) == {"author"}
 
 
 def test_data_da_tag_com_commit_inexistente_levanta_erro(rede):
@@ -138,6 +169,81 @@ def test_data_da_tag_com_commit_inexistente_levanta_erro(rede):
 
 def _corpos_no_cache(tmp_path):
     return [json.loads(a.read_text(encoding="utf-8"))["corpo"] for a in (tmp_path / "cache").glob("*.json")]
+
+
+# tags_com_datas (GraphQL)
+
+
+def no_leve(nome, sha, data):
+    return {"name": nome, "target": {"__typename": "Commit", "oid": sha, "author": {"date": data}}}
+
+
+def no_anotado(nome, sha, data):
+    alvo = {"__typename": "Commit", "oid": sha, "author": {"date": data}}
+    return {"name": nome, "target": {"__typename": "Tag", "target": alvo}}
+
+
+def pagina_de_tags(nos, proximo=None):
+    refs = {"pageInfo": {"hasNextPage": proximo is not None, "endCursor": proximo}, "nodes": nos}
+    return RespostaFalsa(200, {"data": {"repository": {"refs": refs}}})
+
+
+def test_tags_com_datas_le_tag_leve_e_anotada(rede):
+    rede.fila.append(
+        pagina_de_tags(
+            [
+                no_leve("v1.0", "aaa", "2026-01-10T12:00:00Z"),
+                no_anotado("v1.1", "bbb", "2026-02-10T09:00:00-03:00"),
+            ]
+        )
+    )
+
+    tags, sem_commit, paginas = releases.tags_com_datas("o", "r")
+
+    assert tags == [
+        {"name": "v1.0", "sha": "aaa", "data": utc(2026, 1, 10)},
+        {"name": "v1.1", "sha": "bbb", "data": utc(2026, 2, 10)},
+    ]
+    assert (sem_commit, paginas) == (0, 1)
+    assert rede.urls == ["https://api.github.com/graphql"]
+    assert rede.envios[0]["variables"] == {"owner": "o", "repo": "r", "cursor": None}
+
+
+def test_tags_com_datas_conta_alvo_que_nao_e_commit(rede):
+    rede.fila.append(
+        pagina_de_tags(
+            [
+                no_leve("v1.0", "aaa", "2026-01-10T12:00:00Z"),
+                {"name": "arvore", "target": {"__typename": "Tree"}},
+                {"name": "anotada-de-blob", "target": {"__typename": "Tag", "target": {"__typename": "Blob"}}},
+                {"name": "apagada", "target": None},
+            ]
+        )
+    )
+
+    tags, sem_commit, _ = releases.tags_com_datas("o", "r")
+
+    assert [t["name"] for t in tags] == ["v1.0"]
+    assert sem_commit == 3
+
+
+def test_tags_com_datas_pagina_pelo_cursor_e_usa_o_cache(rede):
+    rede.fila.append(pagina_de_tags([no_leve(f"v{i}", f"s{i}", "2026-01-10T12:00:00Z") for i in range(100)], "c1"))
+    rede.fila.append(pagina_de_tags([no_leve("v100", "s100", "2026-01-11T12:00:00Z")]))
+
+    tags, _, paginas = releases.tags_com_datas("o", "r")
+    de_novo = releases.tags_com_datas("o", "r")
+
+    assert len(tags) == 101 and paginas == 2
+    assert [e["variables"]["cursor"] for e in rede.envios] == [None, "c1"]
+    assert de_novo[0] == tags and len(rede.urls) == 2  # a segunda leitura vem só do cache
+
+
+def test_tags_com_datas_com_erro_do_graphql_levanta_erro_http(rede):
+    rede.fila.append(RespostaFalsa(200, {"data": {"repository": None}, "errors": [{"type": "NOT_FOUND"}]}))
+
+    with pytest.raises(cliente_http.ErroHTTP):
+        releases.tags_com_datas("o", "r")
 
 
 def test_cache_de_releases_guarda_so_os_campos_usados(rede, tmp_path):
@@ -357,3 +463,114 @@ def test_releases_com_commits_em_paralelo_da_o_mesmo_resultado(monkeypatch):
     assert em_paralelo == em_sequencia
     assert [r["tag_name"] for r in em_paralelo[0]] == [f"v{i}" for i in range(12)]
     assert em_paralelo[1] == 1
+
+
+def test_c2_conta_prerelease_como_deploy_e_como_base(comparacoes):
+    comparacoes.respostas[("v1.0", "v1.1-rc1")] = [utc(2026, 2, 10)]
+    comparacoes.respostas[("v1.1-rc1", "v1.1")] = [utc(2026, 2, 25)]
+    todas = [
+        release("v1.0", utc(2026, 2, 1)),
+        release("v1.1-rc1", utc(2026, 2, 20), prerelease=True),
+        release("v1.1-rascunho", None, draft=True),
+        release("v1.1", utc(2026, 3, 2)),
+    ]
+
+    resultado, total_404 = releases.releases_com_commits("o", "r", todas, INICIO, FIM, incluir_prereleases=True)
+
+    assert [r["tag_name"] for r in resultado] == ["v1.0", "v1.1-rc1", "v1.1"]
+    assert resultado[2]["commits"] == [utc(2026, 2, 25)]  # só os commits desde a pré-release
+    assert comparacoes.chamadas == [("v1.0", "v1.1-rc1"), ("v1.1-rc1", "v1.1")]
+    assert total_404 == 0
+
+
+# tags_com_commits (C3)
+
+
+@pytest.fixture
+def tags(monkeypatch):
+    """Substitui `tags_com_datas`: lista de `(nome, sha, data)` e o total sem commit."""
+    estado = {"tags": [], "sem_commit": 0}
+
+    def falsa(owner, repo):
+        lista = [{"name": nome, "sha": sha, "data": data} for nome, sha, data in estado["tags"]]
+        return lista, estado["sem_commit"], 1
+
+    monkeypatch.setattr(releases, "tags_com_datas", falsa)
+    return estado
+
+
+def test_tags_ordenadas_pela_data_do_commit_com_anterior_fora_da_janela(tags, comparacoes):
+    tags["tags"] = [
+        ("v2.0", "s20", utc(2026, 3, 1)),
+        ("v1.0", "s10", utc(2025, 6, 1)),  # fora da janela: só serve de base
+        ("v1.5", "s15", utc(2026, 1, 1)),
+    ]
+    comparacoes.respostas[("s10", "s15")] = [utc(2025, 12, 1)]
+    comparacoes.respostas[("s15", "s20")] = [utc(2026, 2, 1), utc(2026, 2, 20)]
+
+    resultado, ignoradas = releases.tags_com_commits("o", "r", INICIO, FIM)
+
+    assert resultado == [
+        {"tag_name": "v1.5", "published_at": utc(2026, 1, 1), "commits": [utc(2025, 12, 1)]},
+        {"tag_name": "v2.0", "published_at": utc(2026, 3, 1), "commits": [utc(2026, 2, 1), utc(2026, 2, 20)]},
+    ]
+    assert ignoradas == 0
+    assert comparacoes.chamadas == [("s10", "s15"), ("s15", "s20")]  # compare pelo sha, não pelo nome
+
+
+def test_tag_sem_anterior_fica_sem_commits_e_nao_e_ignorada(tags, comparacoes):
+    tags["tags"] = [("v1.0", "s10", utc(2026, 1, 1))]
+
+    resultado, ignoradas = releases.tags_com_commits("o", "r", INICIO, FIM)
+
+    assert resultado[0]["commits"] is None
+    assert ignoradas == 0
+    assert comparacoes.chamadas == []
+
+
+def test_tags_no_mesmo_commit_nao_chamam_o_compare(tags, comparacoes):
+    tags["tags"] = [
+        ("pacote-a@1.0", "s1", utc(2026, 1, 1)),
+        ("pacote-b@1.0", "s1", utc(2026, 1, 1)),
+        ("v0", "s0", utc(2025, 12, 1)),
+    ]
+    comparacoes.respostas[("s0", "s1")] = [utc(2025, 12, 15)]
+
+    resultado, _ = releases.tags_com_commits("o", "r", INICIO, FIM)
+
+    assert [r["tag_name"] for r in resultado] == ["v0", "pacote-a@1.0", "pacote-b@1.0"]  # empate pelo nome
+    assert resultado[2]["commits"] == []
+    assert comparacoes.chamadas == [("s0", "s1")]
+
+
+def test_ignoradas_contam_so_compare_com_404_e_nao_tags_sem_commit(tags, comparacoes):
+    tags["tags"] = [("v1", "s1", utc(2026, 1, 1)), ("v2", "s2", utc(2026, 2, 1))]
+    tags["sem_commit"] = 2  # ("s1", "s2") sem resposta: 404
+
+    resultado, ignoradas = releases.tags_com_commits("o", "r", INICIO, FIM)
+
+    assert resultado[1]["commits"] is None
+    assert ignoradas == 1  # como releases_ignoradas_404; as 2 sem commit ficam só no log
+
+
+def test_tag_com_nome_de_release_nao_e_deduplicada(tags, comparacoes):
+    tags["tags"] = [("v1.0", "s10", utc(2026, 1, 1)), ("v1.1", "s11", utc(2026, 2, 1))]
+    comparacoes.respostas[("s10", "s11")] = [utc(2026, 1, 20)]
+    todas = [release("v1.0", utc(2026, 1, 2)), release("v1.1", utc(2026, 2, 2))]
+    comparacoes.respostas[("v1.0", "v1.1")] = [utc(2026, 1, 20)]
+
+    das_tags, _ = releases.tags_com_commits("o", "r", INICIO, FIM)
+    das_releases, _ = releases.releases_com_commits("o", "r", todas, INICIO, FIM)
+
+    assert [t["tag_name"] for t in das_tags] == [r["tag_name"] for r in das_releases] == ["v1.0", "v1.1"]
+    assert das_tags[1]["published_at"] == utc(2026, 2, 1)  # data do commit, não da release
+
+
+def test_custo_das_tags_vai_para_o_log(tags, comparacoes, caplog):
+    tags["tags"] = [("v1", "s1", utc(2026, 1, 1)), ("v2", "s2", utc(2026, 2, 1)), ("v3", "s2", utc(2026, 2, 1))]
+    comparacoes.respostas[("s1", "s2")] = []
+
+    with caplog.at_level("INFO", logger=releases.log.name):
+        releases.tags_com_commits("o", "r", INICIO, FIM)
+
+    assert "o/r: 3 tags (3 na janela, 0 sem commit); custo: 1 consultas GraphQL e 1 compare" in caplog.text

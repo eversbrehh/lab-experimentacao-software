@@ -29,6 +29,7 @@ from metricas.frequencia import deploys_na_janela, frequencia_deploy
 from metricas.janela import semanas
 from metricas.lead_time import lead_time_por_commit, lead_time_por_release
 from metricas.recuperacao import tempo_recuperacao
+from metricas.sensibilidade import classificar_combinacao
 from pipeline import cliente_http, config, funil, releases, runs, selecao
 
 COLUNAS = (
@@ -50,6 +51,16 @@ COLUNAS = (
     "n_censurados_esquerda",
     "categoria_c1",
     "n_metricas_classificadas",
+    "n_prereleases",
+    "n_tags_janela",
+    "tags_ignoradas_404",
+    "frequencia_semana_c2",
+    "lead_time_b_h_c2",
+    "cfr_b_c2",
+    "frequencia_semana_c3",
+    "lead_time_b_h_c3",
+    "categoria_c2",
+    "categoria_c3",
 )
 SUFIXO_SUBAMOSTRA = "_subamostra"
 
@@ -277,6 +288,9 @@ def _avaliar(item, cfg: dict) -> tuple[str | None, dict | None]:
     commits. `ErroHTTP` em qualquer etapa descarta o repositório sem interromper a execução.
     `SemConexao` não é capturada aqui: falta de rede não é erro do repositório, então ela
     encerra a execução sem gravar as saídas.
+
+    As variantes da RQ 07 (C2 e C3) são coletadas depois da aprovação e não mudam o funil:
+    `ErroHTTP` nelas só deixa vazias as colunas da combinação afetada.
     """
     inicio, fim = cfg["janela"]["inicio"], cfg["janela"]["fim"]
     min_releases = cfg["criterios"]["min_releases"]
@@ -314,10 +328,26 @@ def _avaliar(item, cfg: dict) -> tuple[str | None, dict | None]:
     except cliente_http.ErroHTTP as erro:
         log.warning("%s: erro da API em %s (%s)", nome, etapa, erro)
         return funil.ERRO_DA_API, None
-    return None, _linha(metadados, do_repositorio, dos_workflows, com_commits, ignoradas_404, inicio, fim)
+
+    linha = _linha(metadados, do_repositorio, dos_workflows, com_commits, ignoradas_404, inicio, fim)
+    try:
+        com_commits_c2, _ = releases.releases_com_commits(
+            owner, repo, do_repositorio, inicio, fim, incluir_prereleases=True
+        )
+    except cliente_http.ErroHTTP as erro:
+        log.warning("%s: erro da API nos commits de C2 (%s); lead time e categoria de C2 ficam vazios", nome, erro)
+        com_commits_c2 = None
+    try:
+        das_tags = releases.tags_com_commits(owner, repo, inicio, fim)
+    except cliente_http.ErroHTTP as erro:
+        log.warning("%s: erro da API nas tags (%s); as colunas de C3 ficam vazias", nome, erro)
+        das_tags = None
+    linha.update(_colunas_rq07(linha, do_repositorio, com_commits_c2, das_tags, inicio, fim))
+    return None, linha
 
 
 def _linha(metadados, do_repositorio, dos_workflows, com_commits, ignoradas_404, inicio, fim) -> dict:
+    """Colunas de C1 e dos metadados."""
     frequencia = frequencia_deploy(do_repositorio, inicio, fim)
     lead_time_a = lead_time_por_release(com_commits)
     cfr_a = cfr_ci(dos_workflows)
@@ -340,6 +370,50 @@ def _linha(metadados, do_repositorio, dos_workflows, com_commits, ignoradas_404,
         "n_censurados_esquerda": recuperacao["n_censurados_esquerda"],
         "categoria_c1": categoria,
         "n_metricas_classificadas": n_classificadas,
+    }
+
+
+def _colunas_rq07(linha_c1, do_repositorio, com_commits_c2, das_tags, inicio, fim) -> dict:
+    """Colunas de C2 e C3 (RQ 07); `None` em `com_commits_c2` ou `das_tags` indica erro da API.
+
+    C2: release + pré-release, lead time (b) e CFR (b), que fica vazio até a #158.
+    C3: tag, lead time (b) e CFR (a). O tempo de recuperação é o de C1 nas três.
+    """
+    n_semanas = semanas(inicio, fim)
+    recuperacao = linha_c1["recuperacao_mediana_h"]
+    c2 = {
+        "frequencia_semana": frequencia_deploy(do_repositorio, inicio, fim, incluir_prereleases=True),
+        "lead_time_h": lead_time_por_commit(com_commits_c2) if com_commits_c2 is not None else None,
+        "cfr": None,  # CFR (b): heurística da #158
+        "recuperacao_h": recuperacao,
+        "semanas_janela": n_semanas,
+    }
+    colunas = {
+        "n_prereleases": sum(
+            r["prerelease"] for r in deploys_na_janela(do_repositorio, inicio, fim, incluir_prereleases=True)
+        ),
+        "frequencia_semana_c2": c2["frequencia_semana"],
+        "lead_time_b_h_c2": c2["lead_time_h"],
+        "cfr_b_c2": c2["cfr"],
+        "categoria_c2": classificar_combinacao(c2) if com_commits_c2 is not None else None,
+    }
+    if das_tags is None:
+        return colunas
+    tags, tags_404 = das_tags
+    c3 = {
+        "frequencia_semana": len(tags) / n_semanas,
+        "lead_time_h": lead_time_por_commit(tags),
+        "cfr": linha_c1["cfr_a"],
+        "recuperacao_h": recuperacao,
+        "semanas_janela": n_semanas,
+    }
+    return {
+        **colunas,
+        "n_tags_janela": len(tags),
+        "tags_ignoradas_404": tags_404,
+        "frequencia_semana_c3": c3["frequencia_semana"],
+        "lead_time_b_h_c3": c3["lead_time_h"],
+        "categoria_c3": classificar_combinacao(c3),
     }
 
 

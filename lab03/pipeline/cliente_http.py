@@ -3,7 +3,8 @@
 É o único módulo que faz requisições à API do GitHub. Cada resposta 200 ou 404 é
 salva em `<pasta_cache>/<sha256 da URL>.json`; rodar de novo o mesmo comando reaproveita
 o que já foi baixado. O token vai só no cabeçalho `Authorization`, nunca na chave nem no
-arquivo do cache.
+arquivo do cache. Consultas GraphQL (POST) usam o mesmo cache, com a consulta e as
+variáveis somadas à URL na chave.
 
 O módulo pode ser usado por várias threads: `configurar` define quantas requisições podem
 estar em andamento ao mesmo tempo e `mapear` distribui o trabalho respeitando esse teto.
@@ -23,6 +24,7 @@ from urllib.parse import parse_qsl, urlencode, urlsplit, urlunsplit
 import requests
 
 BASE_URL = "https://api.github.com"
+GRAPHQL_URL = f"{BASE_URL}/graphql"
 TIMEOUT = 30
 ESPERAS_5XX = (1, 2, 4, 8)
 # Sem conexão (rede ou DNS fora do ar): a espera cresce até 60 s e se repete até a rede
@@ -58,6 +60,15 @@ class ErroHTTP(Exception):
     def __init__(self, status: int):
         super().__init__(f"HTTP {status}")
         self.status = status
+
+
+class ErroGraphQL(ErroHTTP):
+    """Resposta 200 do GraphQL com o campo `errors` (ex.: repositório inexistente)."""
+
+    def __init__(self, erros: list):
+        super().__init__(200)
+        self.args = ("GraphQL: " + "; ".join(str(e.get("message", e)) for e in erros),)
+        self.erros = erros
 
 
 class SemConexao(Exception):
@@ -124,6 +135,18 @@ def get_com_cabecalhos(
     return _obter(_url_canonica(caminho, params), _redutor(chave, campos))
 
 
+def post_graphql(consulta: str, variaveis: dict | None = None) -> dict:
+    """Campo `data` da resposta à consulta GraphQL, do cache ou da rede.
+
+    Resposta com `errors` levanta `ErroGraphQL` e não vai para o cache. A cota do GraphQL
+    é separada da REST, mas os cabeçalhos `x-ratelimit-*` têm o mesmo formato e são
+    tratados da mesma forma.
+    """
+    url = _url_canonica(GRAPHQL_URL, None)
+    corpo, _ = _obter(url, envio={"query": consulta, "variables": variaveis or {}})
+    return corpo["data"]
+
+
 def get_paginado(
     caminho: str,
     params: dict | None = None,
@@ -159,6 +182,8 @@ def _redutor(chave: str | None, campos: tuple[str, ...] | None):
 
 
 def _so_campos(corpo, chave: str | None, campos: tuple[str, ...]):
+    if chave is None and isinstance(corpo, dict):  # objeto único, ex.: um commit
+        return {campo: corpo.get(campo) for campo in campos}
     if chave is None:
         return [{campo: item.get(campo) for campo in campos} for item in corpo]
     simples = {nome: valor for nome, valor in corpo.items() if not isinstance(valor, (dict, list))}
@@ -167,6 +192,16 @@ def _so_campos(corpo, chave: str | None, campos: tuple[str, ...]):
 
 def _requisitar(url: str, cabecalhos: dict):
     return requests.get(url, headers=cabecalhos, timeout=TIMEOUT)
+
+
+def _postar(url: str, cabecalhos: dict, envio: dict):
+    return requests.post(url, headers=cabecalhos, json=envio, timeout=TIMEOUT)
+
+
+def _chave_do_cache(url: str, envio: dict | None) -> str:
+    if envio is None:
+        return url
+    return url + "#" + json.dumps(envio, sort_keys=True, separators=(",", ":"), ensure_ascii=False)
 
 
 def _url_canonica(caminho: str, params: dict | None) -> str:
@@ -263,13 +298,15 @@ def _espera_do_limite(cabecalhos: dict) -> float | None:
     return None
 
 
-def _obter(url: str, reduzir=None):
+def _obter(url: str, reduzir=None, envio: dict | None = None):
     """Corpo e cabeçalhos da URL, do cache ou da rede.
 
     `reduzir` enxuga o corpo antes de gravá-lo no cache. Também é aplicado na leitura,
     porque o cache pode ter páginas gravadas inteiras por uma execução anterior.
+    Com `envio`, a requisição é um POST GraphQL com esse corpo JSON.
     """
-    em_cache = _ler_cache(url)
+    chave_cache = _chave_do_cache(url, envio)
+    em_cache = _ler_cache(chave_cache)
     if em_cache is not None:
         corpo, cabecalhos = em_cache
         return (reduzir(corpo) if reduzir and corpo is not None else corpo), cabecalhos
@@ -284,7 +321,10 @@ def _obter(url: str, reduzir=None):
             raise Interrompido()
         try:
             with _vagas:
-                resposta = _requisitar(url, _cabecalhos_requisicao())
+                if envio is None:
+                    resposta = _requisitar(url, _cabecalhos_requisicao())
+                else:
+                    resposta = _postar(url, _cabecalhos_requisicao(), envio)
         except requests.ConnectionError:
             # Sem rede: espera a conexão voltar em vez de desistir do recurso. Sem isso, uma
             # queda de minutos faria cada repositório da fila ser descartado como erro da API.
@@ -304,9 +344,11 @@ def _obter(url: str, reduzir=None):
             if status in (200, 404):
                 guardados = {n: v for n, v in cabecalhos.items() if n in CABECALHOS_GUARDADOS}
                 corpo = resposta.json() if status == 200 else None
+                if envio is not None and (corpo is None or corpo.get("errors")):
+                    raise ErroGraphQL((corpo or {}).get("errors") or [{"message": f"HTTP {status}"}])
                 if reduzir and corpo is not None:
                     corpo = reduzir(corpo)
-                _gravar_cache(url, status, corpo, guardados)
+                _gravar_cache(chave_cache, status, corpo, guardados)
                 return corpo, guardados
             if status in (403, 429):
                 espera = _espera_do_limite(cabecalhos)

@@ -442,3 +442,77 @@ def test_tempo_esgotado_continua_sendo_erro_temporario(rede):
 
     assert erro.value.status == 0
     assert rede.esperas == [1, 2, 4, 8]
+
+
+def test_get_json_com_campos_enxuga_um_objeto_unico(rede):
+    rede.enfileirar(RespostaFalsa(200, {"author": {"date": "2026-01-01T00:00:00Z"}, "tree": {"sha": "t"}}))
+
+    assert cliente_http.get_json("/repos/o/r/git/commits/abc", campos=("author",)) == {
+        "author": {"date": "2026-01-01T00:00:00Z"}
+    }
+    (arquivo,) = rede.pasta_cache.glob("*.json")
+    assert set(json.loads(arquivo.read_text(encoding="utf-8"))["corpo"]) == {"author"}
+
+
+# post_graphql
+
+
+@pytest.fixture
+def postagens(rede, monkeypatch):
+    """Faz os POST passarem pela mesma rede falsa, registrando o corpo enviado."""
+    envios = []
+
+    def postar(url, cabecalhos, envio):
+        envios.append(envio)
+        return rede.requisitar(url, cabecalhos)
+
+    monkeypatch.setattr(cliente_http, "_postar", postar)
+    return envios
+
+
+def test_post_graphql_devolve_data_e_usa_o_cache(rede, postagens):
+    rede.enfileirar(RespostaFalsa(200, {"data": {"x": 1}}))
+
+    primeira = cliente_http.post_graphql("query { x }", {"a": 1})
+    segunda = cliente_http.post_graphql("query { x }", {"a": 1})
+
+    assert primeira == segunda == {"x": 1}
+    assert len(rede.chamadas) == 1
+    assert rede.chamadas[0][0] == "https://api.github.com/graphql"
+    assert postagens == [{"query": "query { x }", "variables": {"a": 1}}]
+
+
+def test_post_graphql_com_variaveis_diferentes_nao_reaproveita_o_cache(rede, postagens):
+    rede.enfileirar(RespostaFalsa(200, {"data": {"x": 1}}), RespostaFalsa(200, {"data": {"x": 2}}))
+
+    assert cliente_http.post_graphql("query { x }", {"cursor": None}) == {"x": 1}
+    assert cliente_http.post_graphql("query { x }", {"cursor": "c1"}) == {"x": 2}
+    assert len(list(rede.pasta_cache.glob("*.json"))) == 2
+
+
+def test_post_graphql_com_errors_levanta_erro_e_nao_grava_cache(rede, postagens):
+    rede.enfileirar(RespostaFalsa(200, {"data": None, "errors": [{"message": "Could not resolve"}]}))
+
+    with pytest.raises(ErroHTTP) as erro:
+        cliente_http.post_graphql("query { x }")
+
+    assert isinstance(erro.value, cliente_http.ErroGraphQL)
+    assert "Could not resolve" in str(erro.value)
+    assert list(rede.pasta_cache.glob("*.json")) == []
+
+
+def test_post_graphql_repete_erro_temporario_e_nao_grava_o_token(rede, postagens):
+    rede.enfileirar(RespostaFalsa(502), RespostaFalsa(200, {"data": {"x": 1}}))
+
+    assert cliente_http.post_graphql("query { x }") == {"x": 1}
+    assert rede.esperas == [1]
+    assert rede.chamadas[0][1]["Authorization"] == f"Bearer {TOKEN}"
+    (arquivo,) = rede.pasta_cache.glob("*.json")
+    assert TOKEN not in arquivo.read_text(encoding="utf-8")
+
+
+def test_post_graphql_antes_de_configurar_levanta_erro(monkeypatch):
+    monkeypatch.setitem(cliente_http._estado, "pasta", None)
+
+    with pytest.raises(RuntimeError):
+        cliente_http.post_graphql("query { x }")

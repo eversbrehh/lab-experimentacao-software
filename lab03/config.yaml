@@ -24,6 +24,10 @@ coleta:
   # Candidatos avaliados e requisições em andamento ao mesmo tempo. Acima de 5 não há
   # ganho: o limite passa a ser a cota de 5.000 requisições por hora do token.
   paralelismo: 5
+  # Variantes C2 (release + pré-release) e C3 (tag) da RQ 07. Desligadas, não consultam a API
+  # e as dez colunas delas ficam vazias; a execução usa só o cache. Desligadas na Sprint 02
+  # (dataset congelado na #168); ligue na Sprint 03 (S03-05), que as coleta.
+  variantes_rq07: false
 
 caminhos:
   cache: dados/cache

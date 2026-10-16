@@ -92,6 +92,8 @@ O comando examina os candidatos por estrelas decrescentes, uma faixa de `selecao
 
 `coleta.paralelismo` no `config.yaml` define quantos candidatos são avaliados e quantas requisições ficam em andamento ao mesmo tempo. O resultado é contabilizado na ordem de estrelas, então as saídas são as mesmas com qualquer valor; com 1, a execução é sequencial. Acima de 5 não há ganho, porque o limite passa a ser a cota de 5.000 requisições por hora do token.
 
+`coleta.variantes_rq07` (`true` ou `false`; padrão `true` quando ausente) liga ou desliga a coleta das variantes C2 (release e pré-release) e C3 (tag) da RQ 07. Com `false`, o pipeline não consulta a API para elas, as dez colunas delas (`n_prereleases`, `n_tags_janela`, `tags_ignoradas_404`, `frequencia_semana_c2`, `lead_time_b_h_c2`, `cfr_b_c2`, `frequencia_semana_c3`, `lead_time_b_h_c3`, `categoria_c2` e `categoria_c3`) ficam vazias, e as demais colunas e o funil não mudam. Serve para refazer a execução só pelo cache, como no congelamento do dataset da Sprint 02; o `config.yaml` do repositório traz `false`, e a Sprint 03 (S03-05) o liga para coletar C2 e C3.
+
 | Argumento | Efeito |
 |---|---|
 | `--config <arquivo>` | Obrigatório. Caminhos relativos de `caminhos` partem da pasta desse arquivo |

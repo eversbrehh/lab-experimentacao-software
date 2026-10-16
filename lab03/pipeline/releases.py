@@ -1,8 +1,9 @@
-"""Coleta de releases, tags e dos commits incluídos em cada release.
+"""Coleta de releases, tags e dos commits incluídos em cada release ou tag.
 
 O lead time (RQ 02) precisa dos commits entre uma release e a anterior. A anterior pode
 estar fora da janela, por isso o histórico completo de releases é coletado (sem filtro
-de data) e só depois as releases da janela são consultadas via `compare`.
+de data) e só depois as releases da janela são consultadas via `compare`. As tags (C3 da
+RQ 07) seguem a mesma regra, com a data do commit apontado no lugar de `published_at`.
 """
 
 import logging
@@ -15,6 +16,27 @@ from pipeline import cliente_http
 # `compare` traz o diff de até 300 arquivos; nada disso é usado.
 CAMPOS_RELEASE = ("tag_name", "published_at", "draft", "prerelease", "html_url")
 CAMPOS_COMMIT = ("sha", "commit")
+CAMPOS_TAG = ("name", "commit")
+
+# Tags com a data do commit apontado, 100 por requisição. Pela REST seria uma chamada por
+# tag (`data_da_tag`). A tag anotada aponta para um objeto `Tag`, que aponta para o commit.
+CONSULTA_TAGS = """
+query($owner: String!, $repo: String!, $cursor: String) {
+  repository(owner: $owner, name: $repo) {
+    refs(refPrefix: "refs/tags/", first: 100, after: $cursor) {
+      pageInfo { hasNextPage endCursor }
+      nodes {
+        name
+        target {
+          __typename
+          ... on Commit { oid author { date } }
+          ... on Tag { target { __typename ... on Commit { oid author { date } } } }
+        }
+      }
+    }
+  }
+}
+"""
 
 log = logging.getLogger(__name__)
 
@@ -40,7 +62,7 @@ def coletar_releases(owner: str, repo: str) -> list[dict]:
 
 def coletar_tags(owner: str, repo: str) -> list[dict]:
     """Tags do repositório, com `name` e o `sha` do commit apontado."""
-    brutas = cliente_http.get_paginado(f"/repos/{owner}/{repo}/tags")
+    brutas = cliente_http.get_paginado(f"/repos/{owner}/{repo}/tags", campos=CAMPOS_TAG)
     return [{"name": bruta["name"], "sha": bruta["commit"]["sha"]} for bruta in brutas]
 
 
@@ -48,11 +70,46 @@ def data_da_tag(owner: str, repo: str, sha: str) -> datetime:
     """Data (`commit.author.date`) do commit apontado pela tag.
 
     Tags não têm data própria; esta chamada só deve ser feita para repositórios aprovados.
+    Usa o endpoint Git, que não traz o diff dos arquivos. O pipeline obtém as datas em
+    lote com `tags_com_datas`; esta função atende a consultas avulsas.
     """
-    commit = cliente_http.get_json(f"/repos/{owner}/{repo}/commits/{sha}")
+    commit = cliente_http.get_json(f"/repos/{owner}/{repo}/git/commits/{sha}", campos=("author",))
     if commit is None:
         raise LookupError(f"commit {sha} não encontrado em {owner}/{repo}")
-    return _data(commit["commit"]["author"]["date"])
+    return _data(commit["author"]["date"])
+
+
+def tags_com_datas(owner: str, repo: str) -> tuple[list[dict], int, int]:
+    """Todas as tags com o commit apontado e a data dele, via GraphQL.
+
+    Devolve `(tags, sem_commit, paginas)`: cada tag traz `name`, `sha` e `data`
+    (`commit.author.date`); `sem_commit` conta as tags cujo alvo não é um commit (árvore,
+    blob ou objeto apagado), que ficam de fora; `paginas` é o número de requisições.
+    """
+    tags = []
+    sem_commit = paginas = 0
+    cursor = None
+    while True:
+        dados = cliente_http.post_graphql(CONSULTA_TAGS, {"owner": owner, "repo": repo, "cursor": cursor})
+        paginas += 1
+        refs = dados["repository"]["refs"]
+        for no in refs["nodes"]:
+            commit = _commit_do_alvo(no.get("target"))
+            if commit is None:
+                sem_commit += 1
+            else:
+                tags.append({"name": no["name"], "sha": commit["oid"], "data": _data(commit["author"]["date"])})
+        if not refs["pageInfo"]["hasNextPage"]:
+            return tags, sem_commit, paginas
+        cursor = refs["pageInfo"]["endCursor"]
+
+
+def _commit_do_alvo(alvo: dict | None) -> dict | None:
+    if alvo and alvo.get("__typename") == "Tag":
+        alvo = alvo.get("target")
+    if alvo and alvo.get("__typename") == "Commit":
+        return alvo
+    return None
 
 
 def commits_entre(owner: str, repo: str, base: str, head: str) -> list[dict] | None:
@@ -79,12 +136,13 @@ def commits_entre(owner: str, repo: str, base: str, head: str) -> list[dict] | N
 
 
 def releases_com_commits(
-    owner: str, repo: str, releases: list[dict], inicio, fim
+    owner: str, repo: str, releases: list[dict], inicio, fim, incluir_prereleases: bool = False
 ) -> tuple[list[dict], int]:
     """Deploys da janela com os commits incluídos em cada um.
 
-    Deploy é release com `draft = false` e `prerelease = false`. A release anterior de R é
-    o deploy imediatamente anterior por `published_at`, dentro ou fora da janela.
+    Deploy é release com `draft = false` e `prerelease = false`; com `incluir_prereleases`,
+    as pré-releases também contam (C2 da RQ 07). A release anterior de R é o deploy
+    imediatamente anterior por `published_at`, dentro ou fora da janela.
 
     Cada item devolvido traz `tag_name`, `published_at` e `commits`, a lista das datas
     dos commits incluídos. `commits` é `None` na primeira release da história (sem
@@ -94,35 +152,80 @@ def releases_com_commits(
     configurado para isso; a ordem do resultado não muda.
     """
     deploys = sorted(
-        (r for r in releases if not r["draft"] and not r["prerelease"] and r["published_at"] is not None),
+        (
+            {**r, "ref": r["tag_name"]}
+            for r in releases
+            if not r["draft"] and (incluir_prereleases or not r["prerelease"]) and r["published_at"] is not None
+        ),
         key=lambda r: r["published_at"],
     )
-    na_janela = [
-        (deploys[posicao - 1] if posicao > 0 else None, release)
-        for posicao, release in enumerate(deploys)
-        if dentro_da_janela(release["published_at"], inicio, fim)
-    ]
-    dos_intervalos = cliente_http.mapear(
-        lambda par: commits_entre(owner, repo, par[0]["tag_name"], par[1]["tag_name"]) if par[0] else None,
-        na_janela,
+    resultado, total_404, _ = _com_commits(owner, repo, deploys, inicio, fim, "release")
+    return resultado, total_404
+
+
+def tags_com_commits(owner: str, repo: str, inicio, fim) -> tuple[list[dict], int]:
+    """Tags da janela (C3 da RQ 07) com os commits incluídos em cada uma.
+
+    A data da tag é a do commit apontado, e a anterior de T é a tag imediatamente anterior
+    por essa data (empate pelo nome), dentro ou fora da janela. Os itens têm o formato de
+    `releases_com_commits`, com a data da tag em `published_at`. Tags no mesmo commit da
+    anterior têm `commits = []` sem chamar o `compare`.
+
+    O total devolvido conta os `compare` com 404 (tag fora do lead time), como em
+    `releases_com_commits`. Tag cujo alvo não é commit não tem data, então não é deploy:
+    fica fora de tudo e só aparece no log. Tags e releases são independentes: uma tag com
+    nome de release não é deduplicada.
+    """
+    tags, sem_commit, paginas = tags_com_datas(owner, repo)
+    ordenadas = sorted(
+        ({"tag_name": t["name"], "published_at": t["data"], "ref": t["sha"]} for t in tags),
+        key=lambda t: (t["published_at"], t["tag_name"]),
     )
+    resultado, total_404, comparacoes = _com_commits(owner, repo, ordenadas, inicio, fim, "tag")
+    log.info(
+        "%s/%s: %d tags (%d na janela, %d sem commit); custo: %d consultas GraphQL e %d compare",
+        owner, repo, len(tags), len(resultado), sem_commit, paginas, comparacoes,
+    )
+    return resultado, total_404
+
+
+def _com_commits(owner: str, repo: str, ordenados: list[dict], inicio, fim, rotulo: str):
+    """Itens da janela com os commits desde o anterior; `(resultado, total_404, comparacoes)`.
+
+    `ordenados` traz `tag_name`, `published_at` e `ref` (o que vai no `compare`), em ordem
+    cronológica. `comparacoes` conta os `compare` pedidos.
+    """
+    na_janela = [
+        (ordenados[posicao - 1] if posicao > 0 else None, item)
+        for posicao, item in enumerate(ordenados)
+        if dentro_da_janela(item["published_at"], inicio, fim)
+    ]
+
+    def intervalo(par):
+        anterior, item = par
+        if anterior is None:
+            return None
+        if anterior["ref"] == item["ref"]:
+            return []  # mesmo commit da anterior: nada novo, sem chamar a API
+        return commits_entre(owner, repo, anterior["ref"], item["ref"])
+
+    dos_intervalos = cliente_http.mapear(intervalo, na_janela)
     resultado = []
     total_404 = 0
-    for (anterior, release), do_intervalo in zip(na_janela, dos_intervalos):
+    for (anterior, item), do_intervalo in zip(na_janela, dos_intervalos):
         commits = None
         if anterior is not None:
             if do_intervalo is None:
                 total_404 += 1
                 log.warning(
-                    "%s/%s: compare %s...%s deu 404; release ignorada no lead time",
-                    owner, repo, anterior["tag_name"], release["tag_name"],
+                    "%s/%s: compare %s...%s deu 404; %s ignorada no lead time",
+                    owner, repo, anterior["tag_name"], item["tag_name"], rotulo,
                 )
             else:
                 commits = [commit["data"] for commit in do_intervalo]
-        resultado.append(
-            {"tag_name": release["tag_name"], "published_at": release["published_at"], "commits": commits}
-        )
-    return resultado, total_404
+        resultado.append({"tag_name": item["tag_name"], "published_at": item["published_at"], "commits": commits})
+    comparacoes = sum(1 for anterior, item in na_janela if anterior is not None and anterior["ref"] != item["ref"])
+    return resultado, total_404, comparacoes
 
 
 def _data(texto: str) -> datetime:

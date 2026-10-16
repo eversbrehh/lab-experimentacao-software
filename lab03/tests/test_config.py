@@ -72,8 +72,8 @@ def test_demais_valores_sao_mantidos(tmp_path, com_token):
     assert cfg["selecao"]["faixas_estrelas"] == [">10000", "5000..10000"]
 
 
-def test_paralelismo_ausente_vale_1(tmp_path, com_token):
-    assert config.carregar(gravar(tmp_path))["coleta"] == {"paralelismo": 1}
+def test_coleta_ausente_usa_paralelismo_1_e_variantes_ligadas(tmp_path, com_token):
+    assert config.carregar(gravar(tmp_path))["coleta"] == {"paralelismo": 1, "variantes_rq07": True}
 
 
 def test_paralelismo_do_arquivo_e_mantido(tmp_path, com_token):
@@ -85,6 +85,25 @@ def test_paralelismo_do_arquivo_e_mantido(tmp_path, com_token):
 def test_paralelismo_que_nao_e_inteiro_positivo_e_rejeitado(tmp_path, com_token):
     with pytest.raises(ErroDeConfiguracao, match="coleta.paralelismo"):
         config.carregar(gravar(tmp_path, VALIDO + "coleta:\n  paralelismo: 0\n"))
+
+
+def test_variantes_rq07_ausente_vale_true(tmp_path, com_token):
+    cfg = config.carregar(gravar(tmp_path, VALIDO + "coleta:\n  paralelismo: 5\n"))
+
+    assert cfg["coleta"]["variantes_rq07"] is True
+
+
+def test_variantes_rq07_desligadas_no_arquivo_sao_mantidas(tmp_path, com_token):
+    cfg = config.carregar(gravar(tmp_path, VALIDO + "coleta:\n  variantes_rq07: false\n"))
+
+    assert cfg["coleta"]["variantes_rq07"] is False
+    assert cfg["coleta"]["paralelismo"] == 1
+
+
+@pytest.mark.parametrize("valor", ["1", "0", '"não"', "sim_ou_nao"])
+def test_variantes_rq07_que_nao_e_booleano_e_rejeitado(tmp_path, com_token, valor):
+    with pytest.raises(ErroDeConfiguracao, match="coleta.variantes_rq07"):
+        config.carregar(gravar(tmp_path, VALIDO + f"coleta:\n  variantes_rq07: {valor}\n"))
 
 
 def test_caminhos_relativos_partem_da_pasta_do_config(tmp_path, com_token):

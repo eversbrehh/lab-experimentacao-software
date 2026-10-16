@@ -41,7 +41,9 @@ lab03/
         classificacao.py   # Elite, High, Medium, Low                                    (S01-06)
         conclusao.py       # sucesso, falha ou ignorado por `conclusion`                 (S01-07)
         frequencia.py      # RQ 01                                                       (S01-08)
-        cfr.py             # RQ 03 (a); a variante (b) entra na Sprint 02                (S01-10)
+        cfr.py             # RQ 03, variantes (a) (S01-10) e (b)                         (S02-03)
+        corretiva.py       # heurística de release corretiva, versão 1                   (S02-03)
+        validacao.py       # precisão, recall e F1 da heurística                         (S02-03)
         recuperacao.py     # RQ 04                                                       (S01-10)
     tests/                 # pytest, um arquivo test_<módulo>.py por módulo
         conftest.py        # carregamento das fixtures                                   (S01-02)

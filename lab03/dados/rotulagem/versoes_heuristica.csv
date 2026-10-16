@@ -1,0 +1,2 @@
+versao,regra,n,vp,fp,fn,precisao,recall,f1
+1,"(A) só o patch muda no SemVer em relação à release anterior; (B) revert, hotfix, bugfix ou fix na mensagem de algum commit entre as duas releases",300,71,198,2,0.26394052044609667,0.9726027397260274,0.4152046783625731

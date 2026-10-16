@@ -183,9 +183,14 @@ def rodar(tmp_path):
     caminho = tmp_path / "config.yaml"
     caminho.write_text(CONFIG, encoding="utf-8")
 
-    def _rodar(*argumentos, paralelismo=None):
+    def _rodar(*argumentos, paralelismo=None, variantes=None):
+        opcoes = []
         if paralelismo is not None:
-            caminho.write_text(CONFIG + f"coleta:\n  paralelismo: {paralelismo}\n", encoding="utf-8")
+            opcoes.append(f"  paralelismo: {paralelismo}\n")
+        if variantes is not None:
+            opcoes.append(f"  variantes_rq07: {str(variantes).lower()}\n")
+        if opcoes:
+            caminho.write_text(CONFIG + "coleta:\n" + "".join(opcoes), encoding="utf-8")
         return principal.main(["--config", str(caminho), *argumentos])
 
     return _rodar
@@ -484,6 +489,59 @@ def test_erro_da_api_nas_tags_deixa_vazias_so_as_colunas_de_c3(mundo, rodar, tmp
         assert linha[coluna] == "", coluna
     assert linha["categoria_c2"] == "High"
     assert ler(tmp_path, "funil.csv")[3] == ["Coleta sem erro", "2", "2", "erro da API"]
+
+
+COLUNAS_C2_C3 = (
+    "n_prereleases", "n_tags_janela", "tags_ignoradas_404",
+    "frequencia_semana_c2", "lead_time_b_h_c2", "cfr_b_c2",
+    "frequencia_semana_c3", "lead_time_b_h_c3",
+    "categoria_c2", "categoria_c3",
+)
+
+
+def test_variantes_desligadas_nao_consultam_a_api_de_c2_nem_de_c3(mundo, rodar, monkeypatch):
+    mundo.repo("o/a", prereleases=2, tags=5)
+    mundo.repo("o/b")
+    c1 = mundo.releases_com_commits
+
+    def so_c1(owner, repo, releases, inicio, fim, incluir_prereleases=False):
+        if incluir_prereleases:
+            pytest.fail("não deveria coletar os commits de C2")
+        return c1(owner, repo, releases, inicio, fim)
+
+    monkeypatch.setattr(principal.releases, "releases_com_commits", so_c1)
+    monkeypatch.setattr(principal.releases, "tags_com_commits", lambda *a: pytest.fail("não deveria coletar tags"))
+
+    assert rodar(variantes=False) == 0
+
+
+def test_variantes_desligadas_deixam_vazias_as_dez_colunas_e_nao_mudam_c1_nem_o_funil(mundo, rodar, tmp_path):
+    mundo.repo("o/a", prereleases=2, tags=5, tags_404=1)
+    mundo.repo("o/b", prereleases=1, tags=3)
+
+    assert rodar() == 0
+    ligadas = repositorios(tmp_path)
+    funil_ligado = ler(tmp_path, "funil.csv")
+    assert rodar(variantes=False) == 0
+    desligadas = repositorios(tmp_path)
+
+    assert [l["full_name"] for l in desligadas] == [l["full_name"] for l in ligadas]
+    for com, sem in zip(ligadas, desligadas):
+        assert any(com[coluna] for coluna in COLUNAS_C2_C3)  # as ligadas têm algo para esconder
+        assert {coluna: sem[coluna] for coluna in COLUNAS_C2_C3} == dict.fromkeys(COLUNAS_C2_C3, "")
+        assert {k: v for k, v in sem.items() if k not in COLUNAS_C2_C3} == {
+            k: v for k, v in com.items() if k not in COLUNAS_C2_C3
+        }
+    assert ler(tmp_path, "funil.csv") == funil_ligado
+    assert ler(tmp_path, "repositorios.csv")[0] == list(principal.COLUNAS)  # o esquema não muda
+
+
+def test_variantes_ligadas_por_padrao(mundo, rodar, tmp_path):
+    mundo.repo("o/a", prereleases=2, tags=5)
+
+    assert rodar("--limite", "1", paralelismo=2) == 0
+
+    assert repositorios(tmp_path)[0]["n_tags_janela"] == "5"
 
 
 def test_variantes_nao_sao_coletadas_de_quem_e_descartado(mundo, rodar, monkeypatch):

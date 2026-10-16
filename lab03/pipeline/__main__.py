@@ -8,6 +8,9 @@ Com `coleta.paralelismo` maior que 1, vários candidatos são avaliados ao mesmo
 o resultado é contabilizado na ordem de estrelas: as saídas são as mesmas da execução em
 sequência.
 
+Com `coleta.variantes_rq07: false`, as variantes C2 e C3 da RQ 07 não são coletadas: as
+colunas delas ficam vazias e a execução usa apenas o que já está no cache.
+
 Saídas em `caminhos.saida`: `funil.csv` e `repositorios.csv`. Com `--repos`, os arquivos
 são `funil_subamostra.csv` e `repositorios_subamostra.csv`, para não sobrescrever os da
 amostra.
@@ -290,7 +293,9 @@ def _avaliar(item, cfg: dict) -> tuple[str | None, dict | None]:
     encerra a execução sem gravar as saídas.
 
     As variantes da RQ 07 (C2 e C3) são coletadas depois da aprovação e não mudam o funil:
-    `ErroHTTP` nelas só deixa vazias as colunas da combinação afetada.
+    `ErroHTTP` nelas só deixa vazias as colunas da combinação afetada. Com
+    `coleta.variantes_rq07: false` elas não são coletadas e as dez colunas ficam vazias, o
+    que permite refazer a execução só pelo cache.
     """
     inicio, fim = cfg["janela"]["inicio"], cfg["janela"]["fim"]
     min_releases = cfg["criterios"]["min_releases"]
@@ -330,6 +335,13 @@ def _avaliar(item, cfg: dict) -> tuple[str | None, dict | None]:
         return funil.ERRO_DA_API, None
 
     linha = _linha(metadados, do_repositorio, dos_workflows, com_commits, ignoradas_404, inicio, fim)
+    if cfg["coleta"]["variantes_rq07"]:
+        linha.update(_variantes_rq07(owner, repo, nome, linha, do_repositorio, inicio, fim))
+    return None, linha
+
+
+def _variantes_rq07(owner, repo, nome, linha_c1, do_repositorio, inicio, fim) -> dict:
+    """Coleta C2 e C3 e devolve as colunas da RQ 07; `ErroHTTP` esvazia só a combinação afetada."""
     try:
         com_commits_c2, _ = releases.releases_com_commits(
             owner, repo, do_repositorio, inicio, fim, incluir_prereleases=True
@@ -342,8 +354,7 @@ def _avaliar(item, cfg: dict) -> tuple[str | None, dict | None]:
     except cliente_http.ErroHTTP as erro:
         log.warning("%s: erro da API nas tags (%s); as colunas de C3 ficam vazias", nome, erro)
         das_tags = None
-    linha.update(_colunas_rq07(linha, do_repositorio, com_commits_c2, das_tags, inicio, fim))
-    return None, linha
+    return _colunas_rq07(linha_c1, do_repositorio, com_commits_c2, das_tags, inicio, fim)
 
 
 def _linha(metadados, do_repositorio, dos_workflows, com_commits, ignoradas_404, inicio, fim) -> dict:

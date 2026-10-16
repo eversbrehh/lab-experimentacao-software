@@ -18,6 +18,7 @@ Board do grupo: [Kanban](https://github.com/users/gabialvarenga/projects/9)
 |---|---|
 | [docs/planejamento.md](docs/planejamento.md) | Calendário, decisões, Issues e fluxo das sprints 01 a 03 |
 | [docs/protocolo-rotulagem.md](docs/protocolo-rotulagem.md) | Critérios de rotulagem da amostra-ouro, regras de cegamento e regra de consenso |
+| [docs/dicionario-dados.md](docs/dicionario-dados.md) | Dicionário de dados: nome, tipo, unidade e fórmula ou origem de cada coluna dos CSVs |
 
 ## Estrutura
 
@@ -136,22 +137,7 @@ Etapas do `funil.csv` (colunas `etapa`, `entrada`, `saida`, `motivo`):
 | Releases na janela | Menos de 5 releases |
 | Runs válidos na janela | Menos de 50 runs |
 
-Colunas do `repositorios.csv`, uma linha por repositório aprovado. Decimais usam ponto e precisão completa; métrica indefinida fica vazia.
-
-| Coluna | Conteúdo |
-|---|---|
-| `full_name` | `owner/repo` |
-| `estrelas`, `linguagem`, `contribuidores` | Metadados do repositório; `linguagem` e `contribuidores` ficam vazios quando a API não informa |
-| `idade_dias` | Dias entre a criação e o fim da janela |
-| `n_deploys`, `n_runs_validos` | Contagens usadas no critério de inclusão |
-| `frequencia_semana` | RQ 01: deploys por semana |
-| `lead_time_a_h`, `lead_time_b_h` | RQ 02: mediana por release (a) e por commit (b), em horas |
-| `releases_ignoradas_404` | Releases fora do lead time porque o `compare` com a anterior devolveu 404 |
-| `cfr_a` | RQ 03 (a): fração de runs com falha, de 0 a 1 |
-| `recuperacao_mediana_h` | RQ 04: mediana dos episódios completos, em horas |
-| `n_episodios`, `n_censurados_direita`, `n_censurados_esquerda` | Episódios de falha e quantos são censurados |
-| `categoria_c1` | Classificação DORA com `frequencia_semana`, `lead_time_a_h`, `cfr_a` e `recuperacao_mediana_h` |
-| `n_metricas_classificadas` | Métricas definidas que entraram na classificação (até 4) |
+O `repositorios.csv` tem uma linha por repositório aprovado. Decimais usam ponto e precisão completa; métrica indefinida fica vazia. Nome, tipo, unidade e fórmula de cada coluna deste e dos demais arquivos de dados estão no [dicionário de dados](docs/dicionario-dados.md).
 
 ## Amostra-ouro
 

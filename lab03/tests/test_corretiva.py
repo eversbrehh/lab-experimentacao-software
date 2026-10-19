@@ -2,13 +2,28 @@ from datetime import datetime, timezone
 
 import pytest
 
-from metricas.corretiva import eh_corretiva, rework_rate, so_patch_mudou, tem_palavra_chave, versao_semver
+from metricas.corretiva import (
+    eh_corretiva,
+    maioria_de_correcao,
+    rework_rate,
+    sinais_das_notas,
+    so_patch_mudou,
+    tem_commit_nao_trivial,
+    tem_palavra_chave,
+    texto_das_notas,
+    versao_semver,
+)
 
 PUBLICACAO = datetime(2026, 5, 10, tzinfo=timezone.utc)
 
 
-def release(tag, mensagens=()):
-    return {"tag_name": tag, "published_at": PUBLICACAO, "mensagens": None if mensagens is None else list(mensagens)}
+def release(tag, mensagens=(), notas=None):
+    return {
+        "tag_name": tag,
+        "published_at": PUBLICACAO,
+        "mensagens": None if mensagens is None else list(mensagens),
+        "notas": notas,
+    }
 
 
 @pytest.fixture
@@ -28,8 +43,12 @@ def test_so_patch_basta_mesmo_sem_palavra_chave():
     assert eh_corretiva(release("v2.3.1", ["feat: novo botão"]), release("v2.3.0"))
 
 
-def test_palavra_chave_basta_mesmo_com_minor_novo():
-    assert eh_corretiva(release("v2.4.0", ["feat: x", "fix: y"]), release("v2.3.0"))
+def test_maioria_de_commits_de_correcao_basta_mesmo_com_minor_novo():
+    assert eh_corretiva(release("v2.4.0", ["fix: x", "fix: y", "docs: z"]), release("v2.3.0"))
+
+
+def test_um_feat_entre_commits_de_correcao_impede_sem_notas():
+    assert not eh_corretiva(release("v2.4.0", ["feat: x", "fix: y"]), release("v2.3.0"))
 
 
 def test_minor_novo_sem_palavra_chave_nao_e_corretiva():
@@ -179,7 +198,7 @@ def test_rework_rate_e_a_proporcao_de_corretivas_entre_as_avaliadas():
     releases = [
         item("v1.0.0", "v0.9.0", ["feat: a"]),
         item("v1.1.0", "v1.0.0", ["fix: crash"]),  # corretiva pela mensagem
-        item("v1.1.1", "v1.1.0", ["chore: deps"]),  # corretiva só pelo patch
+        item("v1.1.1", "v1.1.0", ["feat: c"]),  # corretiva só pelo patch (commit não trivial)
         item("v1.2.0", "v1.1.1", ["feat: b"]),
     ]
 
@@ -210,3 +229,99 @@ def test_rework_rate_usa_a_anterior_fora_da_janela():
 def test_rework_rate_sem_releases_avaliaveis_e_indefinido():
     assert rework_rate([]) is None
     assert rework_rate([item("v1.0.0", None, None)]) is None
+
+
+# versão 3: release notes, commits triviais e maioria de commits de correção
+
+
+def com_notas(tag, anterior, notas, mensagens=("feat: x",)):
+    return eh_corretiva(release(tag, mensagens, notas), release(anterior))
+
+
+def test_notas_com_secao_de_funcionalidade_nao_sao_corretivas_mesmo_com_fix():
+    notas = "## Features\n- Novo painel\n## Bug Fixes\n- Corrige o login"
+
+    assert not com_notas("v2.4.0", "v2.3.0", notas)
+    assert not com_notas("v2.3.1", "v2.3.0", notas)  # nem o patch salva
+
+
+def test_notas_so_com_correcoes_sao_corretivas_mesmo_com_minor_novo():
+    assert com_notas("v2.4.0", "v2.3.0", "## Bug Fixes\n- Corrige o travamento ao salvar")
+
+
+def test_item_added_dentro_de_secao_fixed_continua_correcao():
+    notas = "### Fixed\n- Added validation for the workspace path\n- Resolve crash on startup"
+
+    assert com_notas("v2.4.0", "v2.3.0", notas)
+
+
+def test_item_added_fora_de_secao_de_correcao_e_funcionalidade():
+    notas = "### Changes\n- Added support for HTTP/3\n- Fix a typo in the docs"
+
+    assert not com_notas("v2.4.0", "v2.3.0", notas)
+
+
+def test_breaking_none_nao_e_funcionalidade():
+    notas = "This release focuses on compatibility fixes.\n## Breaking Changes: None identified"
+
+    assert com_notas("v2.4.0", "v2.3.0", notas)
+
+
+def test_feat_na_linha_das_notas_e_funcionalidade():
+    assert not com_notas("v2.3.1", "v2.3.0", "Changes since v2.3.0: fix(a): x, feat(b): y")
+
+
+def test_notas_sem_sinal_dependem_do_patch():
+    notas = "Prevent trailing comma in the SCSS function"
+
+    assert com_notas("v3.8.3", "v3.8.2", notas)
+    assert not com_notas("v3.9.0", "v3.8.3", notas)
+
+
+def test_notas_com_secao_de_manutencao_e_so_patch_nao_sao_corretivas():
+    notas = "### Performance\n- Faster cache lookups\n### Chores\n- Update tooling"
+
+    assert not com_notas("v0.13.5", "v0.13.4", notas)
+
+
+def test_notas_genericas_caem_nos_commits():
+    notas = "Generated from commits between `v1.0.0` and `HEAD`\n\nFull Changelog: https://x/compare/a...b"
+
+    assert not eh_corretiva(release("v1.1.0", ["feat: x"], notas), release("v1.0.0"))
+    assert eh_corretiva(release("v1.1.0", ["fix: a", "fix: b"], notas), release("v1.0.0"))
+
+
+def test_patch_so_com_commits_triviais_nao_e_corretiva():
+    assert not eh_corretiva(release("v1.0.1", ["docs: readme", "chore: bump", "v1.0.1"]), release("v1.0.0"))
+    assert eh_corretiva(release("v1.0.1", ["docs: readme", "refactor interno"]), release("v1.0.0"))
+
+
+def test_texto_das_notas_tira_links_html_e_frases_genericas():
+    assert texto_das_notas("![img](https://x/a.png)\n<br>\nFull Changelog: https://x") == ""
+    assert texto_das_notas("- Corrige [o login](https://x/1) no Safari") == "- Corrige o login no Safari"
+    assert texto_das_notas(None) == ""
+
+
+def test_sinais_das_notas_devolve_funcionalidade_correcao_e_manutencao():
+    assert sinais_das_notas("## Features\n- Algo novo") == (True, False, False)
+    assert sinais_das_notas("## Bug Fixes\n- Corrige algo") == (False, True, False)
+    assert sinais_das_notas("## Dependencies\n- bump lib") == (False, False, True)
+
+
+def test_tem_commit_nao_trivial():
+    assert tem_commit_nao_trivial(None) and tem_commit_nao_trivial([])
+    assert not tem_commit_nao_trivial(["Merge pull request #1", "ci: cache", "Bump x from 1 to 2", "docs(a): b"])
+    assert tem_commit_nao_trivial(["Merge pull request #1", "Improve parser"])
+
+
+def test_maioria_de_correcao_usa_o_assunto_e_exige_metade():
+    assert maioria_de_correcao(["fix: a", "Fix b\n\nfeat: no corpo nao conta", "docs: c", "x"]) is True
+    assert not maioria_de_correcao(["fix: a", "docs: b", "docs: c"])
+    assert not maioria_de_correcao(["feat(x): novo", "fix: a", "fix: b"])
+    assert not maioria_de_correcao([]) and not maioria_de_correcao(None)
+
+
+def test_notas_ausentes_usam_so_commits():
+    sem_campo = {"tag_name": "v1.0.1", "published_at": PUBLICACAO, "mensagens": ["fix: x"]}
+
+    assert eh_corretiva(sem_campo, release("v1.0.0"))

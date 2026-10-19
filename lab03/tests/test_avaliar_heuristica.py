@@ -58,16 +58,24 @@ def pasta(tmp_path):
 @pytest.fixture
 def api(monkeypatch):
     mensagens = {
-        ("v1.0.0", "v1.0.1"): ["docs: readme"],
+        ("v1.0.0", "v1.0.1"): ["fix: crash ao abrir arquivo"],
         ("v1.0.1", "v1.1.0"): ["feat: novo"],
         ("v1.9.0", "v2.0.0"): ["feat: grande mudança"],
         ("v2.0.0", "v2.1.0"): ["fix: erro de digitação"],
+    }
+    notas = {
+        "v1.0.1": "## Bug Fixes\n- Corrige o crash ao abrir arquivo",
+        "v1.1.0": "## Features\n- Novo recurso de exportação",
+        "v2.0.0": "Release grande, com várias mudanças internas",
+        "v2.1.0": "## Bug Fixes\n- Corrige erro de digitação",
+        "v0.1.0": "",
     }
 
     def commits_entre(owner, repo, base, head):
         return [{"sha": "x", "data": None, "mensagem": m} for m in mensagens[(base, head)]]
 
     monkeypatch.setattr(avaliacao.releases, "commits_entre", commits_entre)
+    monkeypatch.setattr(avaliacao.releases, "notas_da_release", lambda owner, repo, tag: notas[tag])
     monkeypatch.setattr(avaliacao.cliente_http, "configurar", lambda *a, **k: None)
     monkeypatch.setattr(avaliacao.cliente_http, "mapear", lambda funcao, itens: [funcao(i) for i in itens])
 
@@ -129,8 +137,9 @@ def test_arquivo_ausente_encerra_com_erro(tmp_path, capsys):
     assert "consenso.csv" in capsys.readouterr().err
 
 
-def test_compare_404_deixa_so_o_criterio_do_patch(pasta, monkeypatch):
+def test_compare_404_sem_notas_deixa_so_o_criterio_do_patch(pasta, monkeypatch):
     monkeypatch.setattr(avaliacao.releases, "commits_entre", lambda *a: None)
+    monkeypatch.setattr(avaliacao.releases, "notas_da_release", lambda owner, repo, tag: "")
     itens = avaliacao.ler_itens(str(pasta))
 
     assert avaliacao.previsto(itens[0]) is True  # v1.0.0 -> v1.0.1 muda só o patch

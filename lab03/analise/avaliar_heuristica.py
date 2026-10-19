@@ -3,7 +3,7 @@
 `python -m analise.avaliar_heuristica --versao 1 --regra "<descrição>"`
 
 Para cada release corretiva-ou-não do `consenso.csv` (dimensão `corretiva`), busca as mensagens
-dos commits entre ela e a release anterior (`compare`, pela camada HTTP e seu cache), aplica
+dos commits entre ela e a release anterior (`compare`) e as release notes, pela camada HTTP e seu cache, aplica
 `metricas.corretiva.eh_corretiva` e compara com o rótulo de consenso. Grava a linha da versão
 em `dados/rotulagem/versoes_heuristica.csv`, substituindo a de mesmo número se já existir.
 
@@ -94,7 +94,8 @@ def previsto(item: dict) -> bool:
     if item["base"]:
         commits = releases.commits_entre(owner, repo, item["base"], item["head"])
         mensagens = None if commits is None else [commit["mensagem"] for commit in commits]
-    release = {"tag_name": item["tag"], "published_at": None, "mensagens": mensagens}
+    notas = releases.notas_da_release(owner, repo, item["tag"])
+    release = {"tag_name": item["tag"], "published_at": None, "mensagens": mensagens, "notas": notas}
     anterior = {"tag_name": unquote(item["base"])} if item["base"] else None
     return eh_corretiva(release, anterior)
 

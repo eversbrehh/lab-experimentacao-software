@@ -285,6 +285,7 @@ def ler_releases_do_cache(pasta_cache: str, full_name: str) -> list[dict]:
             "draft": bool(bruta["draft"]),
             "prerelease": bool(bruta["prerelease"]),
             "html_url": bruta["html_url"],
+            "notas": (bruta.get("body") or "") if "body" in bruta else None,
         }
         for bruta in brutas
     ]

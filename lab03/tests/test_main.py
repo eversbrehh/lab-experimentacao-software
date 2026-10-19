@@ -83,6 +83,7 @@ class Mundo:
             "prereleases": 0,
             "tags": 6,
             "tags_404": 0,
+            "corretivas": (),
             **campos,
         }
         owner, name = full_name.split("/")
@@ -140,17 +141,26 @@ class Mundo:
         }
 
     def releases_com_commits(self, owner, repo, releases, inicio, fim, incluir_prereleases=False):
-        """C1: um commit 10 h antes de cada release; C2: 2 h antes de cada release ou pré-release."""
+        """C1: um commit 10 h antes de cada release; C2: 2 h antes de cada release ou pré-release.
+
+        A mensagem do commit é `fix: bug` nas tags de `corretivas` e `feat: novidade` nas demais.
+        """
         spec = self._spec(owner, repo, "compare c2" if incluir_prereleases else "compare")
         horas = 2 if incluir_prereleases else 10
+        itens = [r for r in releases if incluir_prereleases or not r["prerelease"]]
         return [
             {
                 "tag_name": r["tag_name"],
                 "published_at": r["published_at"],
                 "commits": [r["published_at"] - timedelta(hours=horas)] if spec["commits"] else None,
+                "mensagens": (
+                    ["fix: bug" if r["tag_name"] in spec["corretivas"] else "feat: novidade"]
+                    if spec["commits"]
+                    else None
+                ),
+                "anterior_tag": itens[posicao - 1]["tag_name"] if posicao > 0 else None,
             }
-            for r in releases
-            if incluir_prereleases or not r["prerelease"]
+            for posicao, r in enumerate(itens)
         ], spec["ignoradas_404"]
 
     def tags_com_commits(self, owner, repo, inicio, fim):
@@ -382,9 +392,9 @@ def test_colunas_na_ordem_da_issue(mundo, rodar, tmp_path):
     assert ler(tmp_path, "repositorios.csv")[0] == [
         "full_name", "estrelas", "linguagem", "contribuidores", "idade_dias", "n_deploys",
         "n_runs_validos", "frequencia_semana", "lead_time_a_h", "lead_time_b_h",
-        "releases_ignoradas_404", "cfr_a", "recuperacao_mediana_h", "n_episodios",
+        "releases_ignoradas_404", "cfr_a", "cfr_b", "recuperacao_mediana_h", "n_episodios",
         "n_censurados_direita", "n_censurados_esquerda", "categoria_c1", "n_metricas_classificadas",
-        "n_prereleases", "n_tags_janela", "tags_ignoradas_404",
+        "rework_rate", "n_prereleases", "n_tags_janela", "tags_ignoradas_404",
         "frequencia_semana_c2", "lead_time_b_h_c2", "cfr_b_c2",
         "frequencia_semana_c3", "lead_time_b_h_c3",
         "categoria_c2", "categoria_c3",
@@ -409,6 +419,7 @@ def test_metricas_do_repositorio_aprovado(mundo, rodar, tmp_path):
         "lead_time_b_h": "10.0",
         "releases_ignoradas_404": "2",
         "cfr_a": repr(20 / 60),
+        "cfr_b": "0.0",
         "recuperacao_mediana_h": "1.5",
         "n_episodios": "20",
         "n_censurados_direita": "0",
@@ -416,19 +427,61 @@ def test_metricas_do_repositorio_aprovado(mundo, rodar, tmp_path):
         # notas: frequência 1 (Low), lead time 3, CFR 2, recuperação 3 -> mediana 2,5 -> Medium
         "categoria_c1": "Medium",
         "n_metricas_classificadas": "4",
+        "rework_rate": "0.0",
         "n_prereleases": "0",
         "n_tags_janela": "6",
         "tags_ignoradas_404": "0",
         "frequencia_semana_c2": repr(6 / (365 / 7)),
         "lead_time_b_h_c2": "2.0",
-        "cfr_b_c2": "",
+        "cfr_b_c2": "0.0",
         "frequencia_semana_c3": repr(6 / (365 / 7)),
         "lead_time_b_h_c3": "5.0",
-        # C2: frequência 1, lead time 4, CFR indefinido, recuperação 3 -> mediana 3 -> High
+        # C2: frequência 1, lead time 4, CFR 4, recuperação 3 -> mediana 3,5 -> High
         "categoria_c2": "High",
         # C3: frequência 1, lead time 4, CFR 2, recuperação 3 -> mediana 2,5 -> Medium
         "categoria_c3": "Medium",
     }
+
+
+def test_cfr_b_e_rework_rate_vem_das_mensagens_dos_commits(mundo, rodar, tmp_path):
+    mundo.repo("o/a", corretivas={"v2", "v4"})
+
+    rodar("--limite", "1")
+
+    linha = repositorios(tmp_path)[0]
+    # v1 e v3 falham (a release seguinte, em 1 dia, é corretiva); 6 releases avaliadas
+    assert linha["cfr_b"] == repr(2 / 6)
+    assert linha["rework_rate"] == repr(2 / 6)  # v2 e v4 entre as 6 releases com mensagens
+    assert linha["cfr_a"] == repr(20 / 60)  # a variante (a) não muda
+
+
+def test_sem_mensagens_o_rework_rate_fica_vazio(mundo, rodar, tmp_path):
+    mundo.repo("o/a", commits=False)
+
+    rodar("--limite", "1")
+
+    assert repositorios(tmp_path)[0]["rework_rate"] == ""
+
+
+def test_cfr_b_c2_usa_as_pre_releases_como_deploys(mundo, rodar, tmp_path):
+    mundo.repo("o/a", prereleases=2, corretivas={"v1-rc1"})
+
+    rodar("--limite", "1")
+
+    linha = repositorios(tmp_path)[0]
+    assert linha["cfr_b_c2"] != ""
+    assert linha["cfr_b_c2"] != linha["cfr_b"]  # a pré-release corretiva entra só em C2
+
+
+def test_variantes_desligadas_deixam_cfr_b_c2_vazio_mas_nao_cfr_b(mundo, rodar, tmp_path):
+    mundo.repo("o/a", corretivas={"v2"})
+
+    rodar("--limite", "1", variantes=False)
+
+    linha = repositorios(tmp_path)[0]
+    assert linha["cfr_b"] == repr(1 / 6)
+    assert linha["rework_rate"] == repr(1 / 6)
+    assert linha["cfr_b_c2"] == ""
 
 
 def test_metrica_indefinida_fica_vazia_e_reduz_as_classificadas(mundo, rodar, tmp_path):

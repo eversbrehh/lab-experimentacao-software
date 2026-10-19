@@ -73,3 +73,24 @@ def eh_corretiva(release: dict, anterior: dict | None) -> bool:
     if anterior is not None and so_patch_mudou(release["tag_name"], anterior["tag_name"]):
         return True
     return tem_palavra_chave(release["mensagens"])
+
+
+def rework_rate(releases: list[dict]) -> float | None:
+    """Proporção de releases corretivas (RQ 08, *rework rate*).
+
+    `releases` são os deploys da janela como devolve `pipeline.releases.releases_com_commits`:
+    cada item traz `tag_name`, `mensagens` (`None` quando não se sabe) e `anterior_tag` (`None`
+    na primeira release da história). Só entram as releases com `mensagens` conhecidas:
+    a primeira release da história e as de `compare` com 404 ficam fora do numerador e do
+    denominador. Releases sem commits novos (`mensagens = []`) entram e só podem ser
+    corretivas pelo critério (A). Devolve `None` quando nenhuma release entra.
+    """
+    avaliadas = corretivas = 0
+    for release in releases:
+        if release.get("mensagens") is None:
+            continue
+        avaliadas += 1
+        anterior = {"tag_name": release["anterior_tag"]} if release.get("anterior_tag") else None
+        if eh_corretiva(release, anterior):
+            corretivas += 1
+    return corretivas / avaliadas if avaliadas else None

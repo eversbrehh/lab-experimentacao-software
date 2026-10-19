@@ -352,6 +352,8 @@ def test_exemplo_do_enunciado_traz_as_datas_dos_commits(comparacoes):
         "tag_name": "v1.1",
         "published_at": utc(2026, 3, 15),
         "commits": [utc(2026, 3, 2), utc(2026, 3, 10), utc(2026, 3, 14)],
+        "mensagens": ["m", "m", "m"],
+        "anterior_tag": "v1.0",
     }
 
 
@@ -360,9 +362,34 @@ def test_primeira_release_da_historia_tem_commits_none_e_nao_e_404(comparacoes):
 
     resultado, total_404 = releases.releases_com_commits("o", "r", todas, INICIO, FIM)
 
-    assert resultado == [{"tag_name": "v1.0", "published_at": utc(2026, 2, 1), "commits": None}]
+    assert resultado == [
+        {"tag_name": "v1.0", "published_at": utc(2026, 2, 1), "commits": None, "mensagens": None, "anterior_tag": None}
+    ]
     assert total_404 == 0
     assert comparacoes.chamadas == []
+
+
+def test_mensagens_acompanham_os_commits_na_mesma_ordem(monkeypatch):
+    commits = [
+        {"sha": "a", "data": utc(2026, 3, 2), "mensagem": "feat: login\n\ncorpo longo"},
+        {"sha": "b", "data": utc(2026, 3, 10), "mensagem": "fix: crash ao abrir arquivo"},
+    ]
+    monkeypatch.setattr(releases, "commits_entre", lambda owner, repo, base, head: commits)
+    todas = [release("v1.0", utc(2026, 2, 1)), release("v1.1", utc(2026, 3, 15))]
+
+    resultado, _ = releases.releases_com_commits("o", "r", todas, INICIO, FIM)
+
+    assert resultado[1]["mensagens"] == ["feat: login\n\ncorpo longo", "fix: crash ao abrir arquivo"]
+    assert resultado[1]["commits"] == [utc(2026, 3, 2), utc(2026, 3, 10)]
+
+
+def test_compare_com_404_deixa_mensagens_none_mas_guarda_a_tag_anterior(comparacoes):
+    todas = [release("v1.0", utc(2026, 2, 1)), release("v1.1", utc(2026, 3, 1))]
+
+    resultado, total_404 = releases.releases_com_commits("o", "r", todas, INICIO, FIM)
+
+    assert (resultado[1]["mensagens"], resultado[1]["anterior_tag"]) == (None, "v1.0")
+    assert total_404 == 1
 
 
 def test_release_anterior_fora_da_janela_e_usada_como_base(comparacoes):
@@ -373,6 +400,7 @@ def test_release_anterior_fora_da_janela_e_usada_como_base(comparacoes):
 
     assert [r["tag_name"] for r in resultado] == ["v1.0"]  # v0.9 está fora da janela
     assert resultado[0]["commits"] == [utc(2025, 9, 20), utc(2025, 10, 2)]
+    assert resultado[0]["anterior_tag"] == "v0.9"  # a anterior fora da janela continua sendo a base
     assert comparacoes.chamadas == [("v0.9", "v1.0")]
 
 
@@ -421,6 +449,7 @@ def test_release_sem_commits_novos_mantem_lista_vazia(comparacoes):
     resultado, total_404 = releases.releases_com_commits("o", "r", todas, INICIO, FIM)
 
     assert resultado[1]["commits"] == []
+    assert resultado[1]["mensagens"] == []
     assert total_404 == 0
 
 
@@ -511,8 +540,14 @@ def test_tags_ordenadas_pela_data_do_commit_com_anterior_fora_da_janela(tags, co
     resultado, ignoradas = releases.tags_com_commits("o", "r", INICIO, FIM)
 
     assert resultado == [
-        {"tag_name": "v1.5", "published_at": utc(2026, 1, 1), "commits": [utc(2025, 12, 1)]},
-        {"tag_name": "v2.0", "published_at": utc(2026, 3, 1), "commits": [utc(2026, 2, 1), utc(2026, 2, 20)]},
+        {
+            "tag_name": "v1.5", "published_at": utc(2026, 1, 1), "commits": [utc(2025, 12, 1)],
+            "mensagens": ["m"], "anterior_tag": "v1.0",
+        },
+        {
+            "tag_name": "v2.0", "published_at": utc(2026, 3, 1), "commits": [utc(2026, 2, 1), utc(2026, 2, 20)],
+            "mensagens": ["m", "m"], "anterior_tag": "v1.5",
+        },
     ]
     assert ignoradas == 0
     assert comparacoes.chamadas == [("s10", "s15"), ("s15", "s20")]  # compare pelo sha, não pelo nome

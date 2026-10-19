@@ -25,9 +25,10 @@ import sys
 from collections import Counter, deque
 from concurrent.futures import ThreadPoolExecutor
 
-from metricas.cfr import cfr_ci
+from metricas.cfr import cfr_ci, cfr_entrega
 from metricas.classificacao import classificar
 from metricas.conclusao import runs_validos
+from metricas.corretiva import rework_rate
 from metricas.frequencia import deploys_na_janela, frequencia_deploy
 from metricas.janela import semanas
 from metricas.lead_time import lead_time_por_commit, lead_time_por_release
@@ -48,12 +49,14 @@ COLUNAS = (
     "lead_time_b_h",
     "releases_ignoradas_404",
     "cfr_a",
+    "cfr_b",
     "recuperacao_mediana_h",
     "n_episodios",
     "n_censurados_direita",
     "n_censurados_esquerda",
     "categoria_c1",
     "n_metricas_classificadas",
+    "rework_rate",
     "n_prereleases",
     "n_tags_janela",
     "tags_ignoradas_404",
@@ -375,19 +378,21 @@ def _linha(metadados, do_repositorio, dos_workflows, com_commits, ignoradas_404,
         "lead_time_b_h": lead_time_por_commit(com_commits),
         "releases_ignoradas_404": ignoradas_404,
         "cfr_a": cfr_a,
+        "cfr_b": cfr_entrega(com_commits, fim),
         "recuperacao_mediana_h": recuperacao["mediana_horas"],
         "n_episodios": recuperacao["n_episodios"],
         "n_censurados_direita": recuperacao["n_censurados_direita"],
         "n_censurados_esquerda": recuperacao["n_censurados_esquerda"],
         "categoria_c1": categoria,
         "n_metricas_classificadas": n_classificadas,
+        "rework_rate": rework_rate(com_commits),
     }
 
 
 def _colunas_rq07(linha_c1, do_repositorio, com_commits_c2, das_tags, inicio, fim) -> dict:
     """Colunas de C2 e C3 (RQ 07); `None` em `com_commits_c2` ou `das_tags` indica erro da API.
 
-    C2: release + pré-release, lead time (b) e CFR (b), que fica vazio até a #158.
+    C2: release + pré-release, lead time (b) e CFR (b), com a heurística de `metricas.corretiva`.
     C3: tag, lead time (b) e CFR (a). O tempo de recuperação é o de C1 nas três.
     """
     n_semanas = semanas(inicio, fim)
@@ -395,7 +400,7 @@ def _colunas_rq07(linha_c1, do_repositorio, com_commits_c2, das_tags, inicio, fi
     c2 = {
         "frequencia_semana": frequencia_deploy(do_repositorio, inicio, fim, incluir_prereleases=True),
         "lead_time_h": lead_time_por_commit(com_commits_c2) if com_commits_c2 is not None else None,
-        "cfr": None,  # CFR (b): heurística da #158
+        "cfr": cfr_entrega(com_commits_c2, fim) if com_commits_c2 is not None else None,
         "recuperacao_h": recuperacao,
         "semanas_janela": n_semanas,
     }

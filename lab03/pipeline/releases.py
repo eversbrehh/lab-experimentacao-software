@@ -144,9 +144,12 @@ def releases_com_commits(
     as pré-releases também contam (C2 da RQ 07). A release anterior de R é o deploy
     imediatamente anterior por `published_at`, dentro ou fora da janela.
 
-    Cada item devolvido traz `tag_name`, `published_at` e `commits`, a lista das datas
-    dos commits incluídos. `commits` é `None` na primeira release da história (sem
-    anterior) e quando o `compare` dá 404; só o segundo caso entra no total devolvido.
+    Cada item devolvido traz `tag_name`, `published_at`, `commits` (a lista das datas dos
+    commits incluídos), `mensagens` (a lista das mensagens completas desses commits, na
+    mesma ordem) e `anterior_tag` (a tag do deploy anterior, mesmo fora da janela, ou `None`
+    na primeira release da história). `commits` e `mensagens` são `None` na primeira
+    release (sem anterior) e quando o `compare` dá 404; só o segundo caso entra no total
+    devolvido. Sem commits novos, as duas listas são vazias.
 
     Os `compare` passam por `cliente_http.mapear`, em paralelo quando o cliente está
     configurado para isso; a ordem do resultado não muda.
@@ -214,6 +217,7 @@ def _com_commits(owner: str, repo: str, ordenados: list[dict], inicio, fim, rotu
     total_404 = 0
     for (anterior, item), do_intervalo in zip(na_janela, dos_intervalos):
         commits = None
+        mensagens = None
         if anterior is not None:
             if do_intervalo is None:
                 total_404 += 1
@@ -223,7 +227,16 @@ def _com_commits(owner: str, repo: str, ordenados: list[dict], inicio, fim, rotu
                 )
             else:
                 commits = [commit["data"] for commit in do_intervalo]
-        resultado.append({"tag_name": item["tag_name"], "published_at": item["published_at"], "commits": commits})
+                mensagens = [commit["mensagem"] for commit in do_intervalo]
+        resultado.append(
+            {
+                "tag_name": item["tag_name"],
+                "published_at": item["published_at"],
+                "commits": commits,
+                "mensagens": mensagens,
+                "anterior_tag": anterior["tag_name"] if anterior is not None else None,
+            }
+        )
     comparacoes = sum(1 for anterior, item in na_janela if anterior is not None and anterior["ref"] != item["ref"])
     return resultado, total_404, comparacoes
 

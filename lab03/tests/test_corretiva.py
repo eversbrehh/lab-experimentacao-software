@@ -2,7 +2,7 @@ from datetime import datetime, timezone
 
 import pytest
 
-from metricas.corretiva import eh_corretiva, so_patch_mudou, tem_palavra_chave, versao_semver
+from metricas.corretiva import eh_corretiva, rework_rate, so_patch_mudou, tem_palavra_chave, versao_semver
 
 PUBLICACAO = datetime(2026, 5, 10, tzinfo=timezone.utc)
 
@@ -166,3 +166,47 @@ def test_uma_mensagem_com_palavra_chave_entre_varias_basta():
 def test_sem_mensagens_nao_ha_palavra_chave():
     assert not tem_palavra_chave([])
     assert not tem_palavra_chave(None)
+
+
+# rework rate (RQ 08)
+
+
+def item(tag, anterior, mensagens):
+    return {"tag_name": tag, "anterior_tag": anterior, "mensagens": mensagens}
+
+
+def test_rework_rate_e_a_proporcao_de_corretivas_entre_as_avaliadas():
+    releases = [
+        item("v1.0.0", "v0.9.0", ["feat: a"]),
+        item("v1.1.0", "v1.0.0", ["fix: crash"]),  # corretiva pela mensagem
+        item("v1.1.1", "v1.1.0", ["chore: deps"]),  # corretiva só pelo patch
+        item("v1.2.0", "v1.1.1", ["feat: b"]),
+    ]
+
+    assert rework_rate(releases) == 2 / 4
+
+
+def test_rework_rate_ignora_primeira_release_e_compare_404():
+    releases = [
+        item("v1.0.0", None, None),  # primeira da história
+        item("v1.1.0", "v1.0.0", None),  # compare 404
+        item("v1.2.0", "v1.1.0", ["fix: x"]),
+    ]
+
+    assert rework_rate(releases) == 1 / 1
+
+
+def test_rework_rate_conta_release_sem_commits_novos_no_denominador():
+    releases = [item("v1.0.0", "v0.9.0", []), item("v1.0.1", "v1.0.0", [])]
+
+    assert rework_rate(releases) == 1 / 2  # a segunda é corretiva só pelo patch
+
+
+def test_rework_rate_usa_a_anterior_fora_da_janela():
+    # a primeira release da janela tem a anterior fora dela: o patch ainda é comparado
+    assert rework_rate([item("v2.0.1", "v2.0.0", ["feat: y"])]) == 1.0
+
+
+def test_rework_rate_sem_releases_avaliaveis_e_indefinido():
+    assert rework_rate([]) is None
+    assert rework_rate([item("v1.0.0", None, None)]) is None

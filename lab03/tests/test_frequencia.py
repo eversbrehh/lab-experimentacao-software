@@ -78,3 +78,17 @@ def test_releases_de_fora_da_janela_nao_entram_na_frequencia():
 def test_janela_invertida_levanta_erro():
     with pytest.raises(ValueError):
         frequencia_deploy([], FIM, INICIO)
+
+
+def test_c2_conta_prerelease_mas_nao_draft():
+    releases = [
+        release("v1", utc(2026, 1, 1)),
+        release("v2-rc1", utc(2026, 1, 2), prerelease=True),
+        release("v2-rascunho", utc(2026, 1, 3), draft=True),
+        release("v2-rc-rascunho", utc(2026, 1, 4), draft=True, prerelease=True),
+        release("v0-rc1", utc(2025, 9, 1), prerelease=True),  # fora da janela
+    ]
+
+    assert tags(deploys_na_janela(releases, INICIO, FIM, incluir_prereleases=True)) == ["v1", "v2-rc1"]
+    assert frequencia_deploy(releases, INICIO, FIM, incluir_prereleases=True) == pytest.approx(2 / (365 / 7))
+    assert frequencia_deploy(releases, INICIO, FIM) == pytest.approx(1 / (365 / 7))  # C1 não muda

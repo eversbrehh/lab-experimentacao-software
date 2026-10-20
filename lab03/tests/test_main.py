@@ -25,7 +25,7 @@ caminhos:
 BASE = datetime(2026, 1, 1, 12, tzinfo=timezone.utc)
 
 
-def lista_releases(quantidade):
+def lista_releases(quantidade, prereleases=0):
     return [
         {
             "tag_name": f"v{i}",
@@ -35,6 +35,15 @@ def lista_releases(quantidade):
             "html_url": f"https://exemplo/v{i}",
         }
         for i in range(quantidade)
+    ] + [
+        {
+            "tag_name": f"v{i}-rc1",
+            "published_at": BASE + timedelta(days=i, hours=6),
+            "draft": False,
+            "prerelease": True,
+            "html_url": f"https://exemplo/v{i}-rc1",
+        }
+        for i in range(prereleases)
     ]
 
 
@@ -71,6 +80,10 @@ class Mundo:
             "ignoradas_404": 0,
             "commits": True,
             "existe": True,
+            "prereleases": 0,
+            "tags": 6,
+            "tags_404": 0,
+            "corretivas": (),
             **campos,
         }
         owner, name = full_name.split("/")
@@ -110,7 +123,8 @@ class Mundo:
         return self._spec(owner, repo, "workflows")["actions"]
 
     def coletar_releases(self, owner, repo):
-        return lista_releases(self._spec(owner, repo, "releases")["releases"])
+        spec = self._spec(owner, repo, "releases")
+        return lista_releases(spec["releases"], spec["prereleases"])
 
     def coletar_runs(self, owner, repo, branch, inicio, fim):
         assert branch == "main"
@@ -126,16 +140,36 @@ class Mundo:
             "idade_dias": 2464,
         }
 
-    def releases_com_commits(self, owner, repo, releases, inicio, fim):
-        spec = self._spec(owner, repo, "compare")
+    def releases_com_commits(self, owner, repo, releases, inicio, fim, incluir_prereleases=False):
+        """C1: um commit 10 h antes de cada release; C2: 2 h antes de cada release ou pré-release.
+
+        A mensagem do commit é `fix: bug` nas tags de `corretivas` e `feat: novidade` nas demais.
+        """
+        spec = self._spec(owner, repo, "compare c2" if incluir_prereleases else "compare")
+        horas = 2 if incluir_prereleases else 10
+        itens = [r for r in releases if incluir_prereleases or not r["prerelease"]]
         return [
             {
                 "tag_name": r["tag_name"],
                 "published_at": r["published_at"],
-                "commits": [r["published_at"] - timedelta(hours=10)] if spec["commits"] else None,
+                "commits": [r["published_at"] - timedelta(hours=horas)] if spec["commits"] else None,
+                "mensagens": (
+                    ["fix: bug" if r["tag_name"] in spec["corretivas"] else "feat: novidade"]
+                    if spec["commits"]
+                    else None
+                ),
+                "anterior_tag": itens[posicao - 1]["tag_name"] if posicao > 0 else None,
             }
-            for r in releases
+            for posicao, r in enumerate(itens)
         ], spec["ignoradas_404"]
+
+    def tags_com_commits(self, owner, repo, inicio, fim):
+        """Uma tag por dia, cada uma com um commit 5 h antes."""
+        spec = self._spec(owner, repo, "tags")
+        return [
+            {"tag_name": f"t{i}", "published_at": BASE + timedelta(days=i), "commits": [BASE + timedelta(days=i, hours=-5)]}
+            for i in range(spec["tags"])
+        ], spec["tags_404"]
 
 
 @pytest.fixture
@@ -149,6 +183,7 @@ def mundo(monkeypatch):
     monkeypatch.setattr(principal.selecao, "coletar_metadados", falso.coletar_metadados)
     monkeypatch.setattr(principal.releases, "coletar_releases", falso.coletar_releases)
     monkeypatch.setattr(principal.releases, "releases_com_commits", falso.releases_com_commits)
+    monkeypatch.setattr(principal.releases, "tags_com_commits", falso.tags_com_commits)
     monkeypatch.setattr(principal.runs, "coletar_runs", falso.coletar_runs)
     return falso
 
@@ -158,9 +193,14 @@ def rodar(tmp_path):
     caminho = tmp_path / "config.yaml"
     caminho.write_text(CONFIG, encoding="utf-8")
 
-    def _rodar(*argumentos, paralelismo=None):
+    def _rodar(*argumentos, paralelismo=None, variantes=None):
+        opcoes = []
         if paralelismo is not None:
-            caminho.write_text(CONFIG + f"coleta:\n  paralelismo: {paralelismo}\n", encoding="utf-8")
+            opcoes.append(f"  paralelismo: {paralelismo}\n")
+        if variantes is not None:
+            opcoes.append(f"  variantes_rq07: {str(variantes).lower()}\n")
+        if opcoes:
+            caminho.write_text(CONFIG + "coleta:\n" + "".join(opcoes), encoding="utf-8")
         return principal.main(["--config", str(caminho), *argumentos])
 
     return _rodar
@@ -352,8 +392,12 @@ def test_colunas_na_ordem_da_issue(mundo, rodar, tmp_path):
     assert ler(tmp_path, "repositorios.csv")[0] == [
         "full_name", "estrelas", "linguagem", "contribuidores", "idade_dias", "n_deploys",
         "n_runs_validos", "frequencia_semana", "lead_time_a_h", "lead_time_b_h",
-        "releases_ignoradas_404", "cfr_a", "recuperacao_mediana_h", "n_episodios",
+        "releases_ignoradas_404", "cfr_a", "cfr_b", "recuperacao_mediana_h", "n_episodios",
         "n_censurados_direita", "n_censurados_esquerda", "categoria_c1", "n_metricas_classificadas",
+        "rework_rate", "n_prereleases", "n_tags_janela", "tags_ignoradas_404",
+        "frequencia_semana_c2", "lead_time_b_h_c2", "cfr_b_c2",
+        "frequencia_semana_c3", "lead_time_b_h_c3",
+        "categoria_c2", "categoria_c3",
     ]  # fmt: skip
 
 
@@ -375,6 +419,7 @@ def test_metricas_do_repositorio_aprovado(mundo, rodar, tmp_path):
         "lead_time_b_h": "10.0",
         "releases_ignoradas_404": "2",
         "cfr_a": repr(20 / 60),
+        "cfr_b": "0.0",
         "recuperacao_mediana_h": "1.5",
         "n_episodios": "20",
         "n_censurados_direita": "0",
@@ -382,7 +427,61 @@ def test_metricas_do_repositorio_aprovado(mundo, rodar, tmp_path):
         # notas: frequência 1 (Low), lead time 3, CFR 2, recuperação 3 -> mediana 2,5 -> Medium
         "categoria_c1": "Medium",
         "n_metricas_classificadas": "4",
+        "rework_rate": "0.0",
+        "n_prereleases": "0",
+        "n_tags_janela": "6",
+        "tags_ignoradas_404": "0",
+        "frequencia_semana_c2": repr(6 / (365 / 7)),
+        "lead_time_b_h_c2": "2.0",
+        "cfr_b_c2": "0.0",
+        "frequencia_semana_c3": repr(6 / (365 / 7)),
+        "lead_time_b_h_c3": "5.0",
+        # C2: frequência 1, lead time 4, CFR 4, recuperação 3 -> mediana 3,5 -> High
+        "categoria_c2": "High",
+        # C3: frequência 1, lead time 4, CFR 2, recuperação 3 -> mediana 2,5 -> Medium
+        "categoria_c3": "Medium",
     }
+
+
+def test_cfr_b_e_rework_rate_vem_das_mensagens_dos_commits(mundo, rodar, tmp_path):
+    mundo.repo("o/a", corretivas={"v2", "v4"})
+
+    rodar("--limite", "1")
+
+    linha = repositorios(tmp_path)[0]
+    # v1 e v3 falham (a release seguinte, em 1 dia, é corretiva); 6 releases avaliadas
+    assert linha["cfr_b"] == repr(2 / 6)
+    assert linha["rework_rate"] == repr(2 / 6)  # v2 e v4 entre as 6 releases com mensagens
+    assert linha["cfr_a"] == repr(20 / 60)  # a variante (a) não muda
+
+
+def test_sem_mensagens_o_rework_rate_fica_vazio(mundo, rodar, tmp_path):
+    mundo.repo("o/a", commits=False)
+
+    rodar("--limite", "1")
+
+    assert repositorios(tmp_path)[0]["rework_rate"] == ""
+
+
+def test_cfr_b_c2_usa_as_pre_releases_como_deploys(mundo, rodar, tmp_path):
+    mundo.repo("o/a", prereleases=2, corretivas={"v1-rc1"})
+
+    rodar("--limite", "1")
+
+    linha = repositorios(tmp_path)[0]
+    assert linha["cfr_b_c2"] != ""
+    assert linha["cfr_b_c2"] != linha["cfr_b"]  # a pré-release corretiva entra só em C2
+
+
+def test_variantes_desligadas_deixam_cfr_b_c2_vazio_mas_nao_cfr_b(mundo, rodar, tmp_path):
+    mundo.repo("o/a", corretivas={"v2"})
+
+    rodar("--limite", "1", variantes=False)
+
+    linha = repositorios(tmp_path)[0]
+    assert linha["cfr_b"] == repr(1 / 6)
+    assert linha["rework_rate"] == repr(1 / 6)
+    assert linha["cfr_b_c2"] == ""
 
 
 def test_metrica_indefinida_fica_vazia_e_reduz_as_classificadas(mundo, rodar, tmp_path):
@@ -396,6 +495,130 @@ def test_metrica_indefinida_fica_vazia_e_reduz_as_classificadas(mundo, rodar, tm
     assert linha["recuperacao_mediana_h"] == ""
     assert linha["cfr_a"] == "0.0"
     assert linha["n_metricas_classificadas"] == "2"
+
+
+
+# variantes da RQ 07 (C2 e C3)
+
+
+def test_c2_soma_as_prereleases_e_c3_usa_as_tags(mundo, rodar, tmp_path):
+    mundo.repo("o/a", prereleases=4, tags=9, tags_404=2)
+
+    rodar("--limite", "1")
+
+    linha = repositorios(tmp_path)[0]
+    assert linha["n_deploys"] == "6"  # C1 não muda
+    assert linha["n_prereleases"] == "4"
+    assert linha["frequencia_semana_c2"] == repr(10 / (365 / 7))
+    assert linha["n_tags_janela"] == "9"
+    assert linha["tags_ignoradas_404"] == "2"
+    assert linha["frequencia_semana_c3"] == repr(9 / (365 / 7))
+
+
+def test_erro_da_api_em_c2_deixa_vazias_so_as_colunas_de_c2(mundo, rodar, tmp_path):
+    mundo.repo("o/a", erro="compare c2", prereleases=2)
+    mundo.repo("o/b")
+
+    assert rodar() == 0
+
+    linha = repositorios(tmp_path)[0]
+    assert linha["full_name"] == "o/a"  # continua aprovado
+    assert (linha["lead_time_b_h_c2"], linha["categoria_c2"]) == ("", "")
+    assert linha["frequencia_semana_c2"] == repr(8 / (365 / 7))  # vem da lista de releases
+    assert linha["n_prereleases"] == "2"
+    assert linha["categoria_c3"] == "Medium"
+    assert ler(tmp_path, "funil.csv")[3] == ["Coleta sem erro", "2", "2", "erro da API"]
+
+
+def test_erro_da_api_nas_tags_deixa_vazias_so_as_colunas_de_c3(mundo, rodar, tmp_path):
+    mundo.repo("o/a", erro="tags")
+    mundo.repo("o/b")
+
+    assert rodar() == 0
+
+    linha = repositorios(tmp_path)[0]
+    assert linha["full_name"] == "o/a"
+    for coluna in ("n_tags_janela", "tags_ignoradas_404", "frequencia_semana_c3", "lead_time_b_h_c3", "categoria_c3"):
+        assert linha[coluna] == "", coluna
+    assert linha["categoria_c2"] == "High"
+    assert ler(tmp_path, "funil.csv")[3] == ["Coleta sem erro", "2", "2", "erro da API"]
+
+
+COLUNAS_C2_C3 = (
+    "n_prereleases", "n_tags_janela", "tags_ignoradas_404",
+    "frequencia_semana_c2", "lead_time_b_h_c2", "cfr_b_c2",
+    "frequencia_semana_c3", "lead_time_b_h_c3",
+    "categoria_c2", "categoria_c3",
+)
+
+
+def test_variantes_desligadas_nao_consultam_a_api_de_c2_nem_de_c3(mundo, rodar, monkeypatch):
+    mundo.repo("o/a", prereleases=2, tags=5)
+    mundo.repo("o/b")
+    c1 = mundo.releases_com_commits
+
+    def so_c1(owner, repo, releases, inicio, fim, incluir_prereleases=False):
+        if incluir_prereleases:
+            pytest.fail("não deveria coletar os commits de C2")
+        return c1(owner, repo, releases, inicio, fim)
+
+    monkeypatch.setattr(principal.releases, "releases_com_commits", so_c1)
+    monkeypatch.setattr(principal.releases, "tags_com_commits", lambda *a: pytest.fail("não deveria coletar tags"))
+
+    assert rodar(variantes=False) == 0
+
+
+def test_variantes_desligadas_deixam_vazias_as_dez_colunas_e_nao_mudam_c1_nem_o_funil(mundo, rodar, tmp_path):
+    mundo.repo("o/a", prereleases=2, tags=5, tags_404=1)
+    mundo.repo("o/b", prereleases=1, tags=3)
+
+    assert rodar() == 0
+    ligadas = repositorios(tmp_path)
+    funil_ligado = ler(tmp_path, "funil.csv")
+    assert rodar(variantes=False) == 0
+    desligadas = repositorios(tmp_path)
+
+    assert [l["full_name"] for l in desligadas] == [l["full_name"] for l in ligadas]
+    for com, sem in zip(ligadas, desligadas):
+        assert any(com[coluna] for coluna in COLUNAS_C2_C3)  # as ligadas têm algo para esconder
+        assert {coluna: sem[coluna] for coluna in COLUNAS_C2_C3} == dict.fromkeys(COLUNAS_C2_C3, "")
+        assert {k: v for k, v in sem.items() if k not in COLUNAS_C2_C3} == {
+            k: v for k, v in com.items() if k not in COLUNAS_C2_C3
+        }
+    assert ler(tmp_path, "funil.csv") == funil_ligado
+    assert ler(tmp_path, "repositorios.csv")[0] == list(principal.COLUNAS)  # o esquema não muda
+
+
+def test_variantes_ligadas_por_padrao(mundo, rodar, tmp_path):
+    mundo.repo("o/a", prereleases=2, tags=5)
+
+    assert rodar("--limite", "1", paralelismo=2) == 0
+
+    assert repositorios(tmp_path)[0]["n_tags_janela"] == "5"
+
+
+def test_variantes_nao_sao_coletadas_de_quem_e_descartado(mundo, rodar, monkeypatch):
+    mundo.repo("o/poucos-runs", runs=["success"] * 49)
+    mundo.repo("o/a")
+    monkeypatch.setattr(
+        principal.releases, "tags_com_commits",
+        lambda owner, repo, *a: pytest.fail("não deveria coletar tags") if repo == "poucos-runs" else ([], 0),
+    )
+
+    assert rodar() == 0
+
+
+def test_repositorio_sem_tags_na_janela_tem_c3_com_frequencia_zero(mundo, rodar, tmp_path):
+    mundo.repo("o/a", tags=0)
+
+    rodar("--limite", "1")
+
+    linha = repositorios(tmp_path)[0]
+    assert linha["n_tags_janela"] == "0"
+    assert linha["frequencia_semana_c3"] == "0.0"
+    assert linha["lead_time_b_h_c3"] == ""
+    # C3: frequência 1 (Low), lead time indefinido, CFR 2, recuperação 3 -> mediana 2 -> Medium
+    assert linha["categoria_c3"] == "Medium"
 
 
 # --repos

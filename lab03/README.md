@@ -18,6 +18,7 @@ Board do grupo: [Kanban](https://github.com/users/gabialvarenga/projects/9)
 |---|---|
 | [docs/planejamento.md](docs/planejamento.md) | Calendário, decisões, Issues e fluxo das sprints 01 a 03 |
 | [docs/protocolo-rotulagem.md](docs/protocolo-rotulagem.md) | Critérios de rotulagem da amostra-ouro, regras de cegamento e regra de consenso |
+| [docs/dicionario-dados.md](docs/dicionario-dados.md) | Dicionário de dados: nome, tipo, unidade e fórmula ou origem de cada coluna dos CSVs |
 
 ## Estrutura
 
@@ -41,7 +42,9 @@ lab03/
         classificacao.py   # Elite, High, Medium, Low                                    (S01-06)
         conclusao.py       # sucesso, falha ou ignorado por `conclusion`                 (S01-07)
         frequencia.py      # RQ 01                                                       (S01-08)
-        cfr.py             # RQ 03 (a); a variante (b) entra na Sprint 02                (S01-10)
+        cfr.py             # RQ 03, variantes (a) (S01-10) e (b)                         (S02-03)
+        corretiva.py       # heurística de release corretiva, versão 1                   (S02-03)
+        validacao.py       # precisão, recall e F1 da heurística                         (S02-03)
         recuperacao.py     # RQ 04                                                       (S01-10)
     tests/                 # pytest, um arquivo test_<módulo>.py por módulo
         conftest.py        # carregamento das fixtures                                   (S01-02)
@@ -92,6 +95,8 @@ O comando examina os candidatos por estrelas decrescentes, uma faixa de `selecao
 
 `coleta.paralelismo` no `config.yaml` define quantos candidatos são avaliados e quantas requisições ficam em andamento ao mesmo tempo. O resultado é contabilizado na ordem de estrelas, então as saídas são as mesmas com qualquer valor; com 1, a execução é sequencial. Acima de 5 não há ganho, porque o limite passa a ser a cota de 5.000 requisições por hora do token.
 
+`coleta.variantes_rq07` (`true` ou `false`; padrão `true` quando ausente) liga ou desliga a coleta das variantes C2 (release e pré-release) e C3 (tag) da RQ 07. Com `false`, o pipeline não consulta a API para elas, as dez colunas delas (`n_prereleases`, `n_tags_janela`, `tags_ignoradas_404`, `frequencia_semana_c2`, `lead_time_b_h_c2`, `cfr_b_c2`, `frequencia_semana_c3`, `lead_time_b_h_c3`, `categoria_c2` e `categoria_c3`) ficam vazias, e as demais colunas e o funil não mudam. Serve para refazer a execução só pelo cache, como no congelamento do dataset da Sprint 02; o `config.yaml` do repositório traz `false`, e a Sprint 03 (S03-05) o liga para coletar C2 e C3.
+
 | Argumento | Efeito |
 |---|---|
 | `--config <arquivo>` | Obrigatório. Caminhos relativos de `caminhos` partem da pasta desse arquivo |
@@ -132,22 +137,7 @@ Etapas do `funil.csv` (colunas `etapa`, `entrada`, `saida`, `motivo`):
 | Releases na janela | Menos de 5 releases |
 | Runs válidos na janela | Menos de 50 runs |
 
-Colunas do `repositorios.csv`, uma linha por repositório aprovado. Decimais usam ponto e precisão completa; métrica indefinida fica vazia.
-
-| Coluna | Conteúdo |
-|---|---|
-| `full_name` | `owner/repo` |
-| `estrelas`, `linguagem`, `contribuidores` | Metadados do repositório; `linguagem` e `contribuidores` ficam vazios quando a API não informa |
-| `idade_dias` | Dias entre a criação e o fim da janela |
-| `n_deploys`, `n_runs_validos` | Contagens usadas no critério de inclusão |
-| `frequencia_semana` | RQ 01: deploys por semana |
-| `lead_time_a_h`, `lead_time_b_h` | RQ 02: mediana por release (a) e por commit (b), em horas |
-| `releases_ignoradas_404` | Releases fora do lead time porque o `compare` com a anterior devolveu 404 |
-| `cfr_a` | RQ 03 (a): fração de runs com falha, de 0 a 1 |
-| `recuperacao_mediana_h` | RQ 04: mediana dos episódios completos, em horas |
-| `n_episodios`, `n_censurados_direita`, `n_censurados_esquerda` | Episódios de falha e quantos são censurados |
-| `categoria_c1` | Classificação DORA com `frequencia_semana`, `lead_time_a_h`, `cfr_a` e `recuperacao_mediana_h` |
-| `n_metricas_classificadas` | Métricas definidas que entraram na classificação (até 4) |
+O `repositorios.csv` tem uma linha por repositório aprovado. Decimais usam ponto e precisão completa; métrica indefinida fica vazia. Nome, tipo, unidade e fórmula de cada coluna deste e dos demais arquivos de dados estão no [dicionário de dados](docs/dicionario-dados.md).
 
 ## Amostra-ouro
 

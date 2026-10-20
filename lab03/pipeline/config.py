@@ -21,8 +21,10 @@ def carregar(caminho: str) -> dict:
     """Conteúdo do `config.yaml`, com a janela em `date` e o token em `config["token"]`.
 
     Caminhos relativos de `caminhos` são resolvidos a partir da pasta do arquivo de
-    configuração. `coleta.paralelismo` é opcional e vale 1 quando ausente. Levanta
-    `ErroDeConfiguracao` se o arquivo, uma chave obrigatória ou o token estiverem ausentes.
+    configuração. `coleta.paralelismo` é opcional e vale 1 quando ausente.
+    `coleta.variantes_rq07` (booleano) liga ou desliga a coleta das variantes C2 e C3 da
+    RQ 07 e vale `True` quando ausente. Levanta `ErroDeConfiguracao` se o arquivo, uma
+    chave obrigatória ou o token estiverem ausentes, ou se uma opção tiver tipo inválido.
     """
     try:
         with open(caminho, encoding="utf-8") as arquivo:
@@ -56,6 +58,9 @@ def carregar(caminho: str) -> dict:
         raise ErroDeConfiguracao("coleta deve ser um mapeamento")
     coleta.setdefault("paralelismo", 1)
     _inteiro_positivo(coleta, "coleta", "paralelismo")
+    coleta.setdefault("variantes_rq07", True)
+    if not isinstance(coleta["variantes_rq07"], bool):
+        raise ErroDeConfiguracao("coleta.variantes_rq07 deve ser true ou false")
 
     caminhos = _secao(config, "caminhos")
     pasta = os.path.dirname(os.path.abspath(caminho))

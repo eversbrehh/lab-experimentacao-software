@@ -1,0 +1,408 @@
+{
+  "_descricao": [
+    "Repositório fictício na janela 2025-10-01 a 2026-09-30 (365 dias = 365/7 semanas).",
+    "Releases v1.0 a v1.9 no dia 1 de cada mês, de nov/2025 a ago/2026; v0.9 (01/09/2025) fica fora e só serve de base.",
+    "Cada release R tem 2 commits: A = R - 31 dias e B = R - 12 horas.",
+    "v1.3, v1.5 e v1.7 têm uma pré-release rc1 publicada em A + 12 h, que inclui só o commit A.",
+    "Tags: uma por release e por pré-release; a data da tag é a do commit apontado (B na release, A na rc1).",
+    "CFR (a) = 0,20 e tempo de recuperação = 5 h nas três combinações; CFR (b) de C2 ainda indefinido (#158)."
+  ],
+  "_calculo_manual": {
+    "frequencia": "C1: 10 deploys -> 10*7/365 = 0,19178/semana < 12*7/365 = 0,23014 (1 por mês) -> Low. C2: 10 releases + 3 pré-releases = 13 -> 13*7/365 = 0,24932 -> Medium. C3: 13 tags -> 0,24932 -> Medium.",
+    "lead_time_c1": "Variante (a): cada release vale R - A = 31 dias = 744 h; mediana = 744 h -> Low (>= 30 dias). Variante (b): 10 x 744 h e 10 x 12 h; mediana = (12 + 744)/2 = 378 h.",
+    "lead_time_c2": "Variante (b): 7 releases sem rc1 dão 744 h e 12 h; cada rc1 dá A + 12 h - A = 12 h; cada release com rc1 dá R - B = 12 h. Valores: 7 x 744 e 13 x 12; mediana = 12 h -> Elite (< 1 dia).",
+    "lead_time_c3": "Variante (b), data da tag = commit apontado: 7 tags de release sem rc1 dão B - A = 30,5 dias = 732 h e B - B = 0; cada tag rc1 dá A - A = 0; cada tag de release com rc1 dá B - B = 0. Valores: 7 x 732 e 13 x 0; mediana = 0 h -> Elite.",
+    "categorias": "C1: notas Low(1), Low(1), High(3), High(3) -> mediana 2 -> Medium. C2: Medium(2), Elite(4), CFR indefinido, High(3) -> mediana 3 -> High. C3: Medium(2), Elite(4), High(3), High(3) -> mediana 3 -> High."
+  },
+  "releases": [
+    {
+      "tag_name": "v0.9",
+      "published_at": "2025-09-01T00:00:00+00:00",
+      "draft": false,
+      "prerelease": false
+    },
+    {
+      "tag_name": "v1.0",
+      "published_at": "2025-11-01T00:00:00+00:00",
+      "draft": false,
+      "prerelease": false
+    },
+    {
+      "tag_name": "v1.1",
+      "published_at": "2025-12-01T00:00:00+00:00",
+      "draft": false,
+      "prerelease": false
+    },
+    {
+      "tag_name": "v1.2",
+      "published_at": "2026-01-01T00:00:00+00:00",
+      "draft": false,
+      "prerelease": false
+    },
+    {
+      "tag_name": "v1.3",
+      "published_at": "2026-02-01T00:00:00+00:00",
+      "draft": false,
+      "prerelease": false
+    },
+    {
+      "tag_name": "v1.4",
+      "published_at": "2026-03-01T00:00:00+00:00",
+      "draft": false,
+      "prerelease": false
+    },
+    {
+      "tag_name": "v1.5",
+      "published_at": "2026-04-01T00:00:00+00:00",
+      "draft": false,
+      "prerelease": false
+    },
+    {
+      "tag_name": "v1.6",
+      "published_at": "2026-05-01T00:00:00+00:00",
+      "draft": false,
+      "prerelease": false
+    },
+    {
+      "tag_name": "v1.7",
+      "published_at": "2026-06-01T00:00:00+00:00",
+      "draft": false,
+      "prerelease": false
+    },
+    {
+      "tag_name": "v1.8",
+      "published_at": "2026-07-01T00:00:00+00:00",
+      "draft": false,
+      "prerelease": false
+    },
+    {
+      "tag_name": "v1.9",
+      "published_at": "2026-08-01T00:00:00+00:00",
+      "draft": false,
+      "prerelease": false
+    },
+    {
+      "tag_name": "v1.3-rc1",
+      "published_at": "2026-01-01T12:00:00+00:00",
+      "draft": false,
+      "prerelease": true
+    },
+    {
+      "tag_name": "v1.5-rc1",
+      "published_at": "2026-03-01T12:00:00+00:00",
+      "draft": false,
+      "prerelease": true
+    },
+    {
+      "tag_name": "v1.7-rc1",
+      "published_at": "2026-05-01T12:00:00+00:00",
+      "draft": false,
+      "prerelease": true
+    },
+    {
+      "tag_name": "v2.0-rascunho",
+      "published_at": null,
+      "draft": true,
+      "prerelease": false
+    }
+  ],
+  "c1": [
+    {
+      "tag": "v1.0",
+      "published_at": "2025-11-01T00:00:00+00:00",
+      "commits": [
+        "2025-10-01T00:00:00+00:00",
+        "2025-10-31T12:00:00+00:00"
+      ]
+    },
+    {
+      "tag": "v1.1",
+      "published_at": "2025-12-01T00:00:00+00:00",
+      "commits": [
+        "2025-10-31T00:00:00+00:00",
+        "2025-11-30T12:00:00+00:00"
+      ]
+    },
+    {
+      "tag": "v1.2",
+      "published_at": "2026-01-01T00:00:00+00:00",
+      "commits": [
+        "2025-12-01T00:00:00+00:00",
+        "2025-12-31T12:00:00+00:00"
+      ]
+    },
+    {
+      "tag": "v1.3",
+      "published_at": "2026-02-01T00:00:00+00:00",
+      "commits": [
+        "2026-01-01T00:00:00+00:00",
+        "2026-01-31T12:00:00+00:00"
+      ]
+    },
+    {
+      "tag": "v1.4",
+      "published_at": "2026-03-01T00:00:00+00:00",
+      "commits": [
+        "2026-01-29T00:00:00+00:00",
+        "2026-02-28T12:00:00+00:00"
+      ]
+    },
+    {
+      "tag": "v1.5",
+      "published_at": "2026-04-01T00:00:00+00:00",
+      "commits": [
+        "2026-03-01T00:00:00+00:00",
+        "2026-03-31T12:00:00+00:00"
+      ]
+    },
+    {
+      "tag": "v1.6",
+      "published_at": "2026-05-01T00:00:00+00:00",
+      "commits": [
+        "2026-03-31T00:00:00+00:00",
+        "2026-04-30T12:00:00+00:00"
+      ]
+    },
+    {
+      "tag": "v1.7",
+      "published_at": "2026-06-01T00:00:00+00:00",
+      "commits": [
+        "2026-05-01T00:00:00+00:00",
+        "2026-05-31T12:00:00+00:00"
+      ]
+    },
+    {
+      "tag": "v1.8",
+      "published_at": "2026-07-01T00:00:00+00:00",
+      "commits": [
+        "2026-05-31T00:00:00+00:00",
+        "2026-06-30T12:00:00+00:00"
+      ]
+    },
+    {
+      "tag": "v1.9",
+      "published_at": "2026-08-01T00:00:00+00:00",
+      "commits": [
+        "2026-07-01T00:00:00+00:00",
+        "2026-07-31T12:00:00+00:00"
+      ]
+    }
+  ],
+  "c2": [
+    {
+      "tag": "v1.0",
+      "published_at": "2025-11-01T00:00:00+00:00",
+      "commits": [
+        "2025-10-01T00:00:00+00:00",
+        "2025-10-31T12:00:00+00:00"
+      ]
+    },
+    {
+      "tag": "v1.1",
+      "published_at": "2025-12-01T00:00:00+00:00",
+      "commits": [
+        "2025-10-31T00:00:00+00:00",
+        "2025-11-30T12:00:00+00:00"
+      ]
+    },
+    {
+      "tag": "v1.2",
+      "published_at": "2026-01-01T00:00:00+00:00",
+      "commits": [
+        "2025-12-01T00:00:00+00:00",
+        "2025-12-31T12:00:00+00:00"
+      ]
+    },
+    {
+      "tag": "v1.3-rc1",
+      "published_at": "2026-01-01T12:00:00+00:00",
+      "commits": [
+        "2026-01-01T00:00:00+00:00"
+      ]
+    },
+    {
+      "tag": "v1.3",
+      "published_at": "2026-02-01T00:00:00+00:00",
+      "commits": [
+        "2026-01-31T12:00:00+00:00"
+      ]
+    },
+    {
+      "tag": "v1.4",
+      "published_at": "2026-03-01T00:00:00+00:00",
+      "commits": [
+        "2026-01-29T00:00:00+00:00",
+        "2026-02-28T12:00:00+00:00"
+      ]
+    },
+    {
+      "tag": "v1.5-rc1",
+      "published_at": "2026-03-01T12:00:00+00:00",
+      "commits": [
+        "2026-03-01T00:00:00+00:00"
+      ]
+    },
+    {
+      "tag": "v1.5",
+      "published_at": "2026-04-01T00:00:00+00:00",
+      "commits": [
+        "2026-03-31T12:00:00+00:00"
+      ]
+    },
+    {
+      "tag": "v1.6",
+      "published_at": "2026-05-01T00:00:00+00:00",
+      "commits": [
+        "2026-03-31T00:00:00+00:00",
+        "2026-04-30T12:00:00+00:00"
+      ]
+    },
+    {
+      "tag": "v1.7-rc1",
+      "published_at": "2026-05-01T12:00:00+00:00",
+      "commits": [
+        "2026-05-01T00:00:00+00:00"
+      ]
+    },
+    {
+      "tag": "v1.7",
+      "published_at": "2026-06-01T00:00:00+00:00",
+      "commits": [
+        "2026-05-31T12:00:00+00:00"
+      ]
+    },
+    {
+      "tag": "v1.8",
+      "published_at": "2026-07-01T00:00:00+00:00",
+      "commits": [
+        "2026-05-31T00:00:00+00:00",
+        "2026-06-30T12:00:00+00:00"
+      ]
+    },
+    {
+      "tag": "v1.9",
+      "published_at": "2026-08-01T00:00:00+00:00",
+      "commits": [
+        "2026-07-01T00:00:00+00:00",
+        "2026-07-31T12:00:00+00:00"
+      ]
+    }
+  ],
+  "c3": [
+    {
+      "tag": "v1.0",
+      "published_at": "2025-10-31T12:00:00+00:00",
+      "commits": [
+        "2025-10-01T00:00:00+00:00",
+        "2025-10-31T12:00:00+00:00"
+      ]
+    },
+    {
+      "tag": "v1.1",
+      "published_at": "2025-11-30T12:00:00+00:00",
+      "commits": [
+        "2025-10-31T00:00:00+00:00",
+        "2025-11-30T12:00:00+00:00"
+      ]
+    },
+    {
+      "tag": "v1.2",
+      "published_at": "2025-12-31T12:00:00+00:00",
+      "commits": [
+        "2025-12-01T00:00:00+00:00",
+        "2025-12-31T12:00:00+00:00"
+      ]
+    },
+    {
+      "tag": "v1.3-rc1",
+      "published_at": "2026-01-01T00:00:00+00:00",
+      "commits": [
+        "2026-01-01T00:00:00+00:00"
+      ]
+    },
+    {
+      "tag": "v1.3",
+      "published_at": "2026-01-31T12:00:00+00:00",
+      "commits": [
+        "2026-01-31T12:00:00+00:00"
+      ]
+    },
+    {
+      "tag": "v1.4",
+      "published_at": "2026-02-28T12:00:00+00:00",
+      "commits": [
+        "2026-01-29T00:00:00+00:00",
+        "2026-02-28T12:00:00+00:00"
+      ]
+    },
+    {
+      "tag": "v1.5-rc1",
+      "published_at": "2026-03-01T00:00:00+00:00",
+      "commits": [
+        "2026-03-01T00:00:00+00:00"
+      ]
+    },
+    {
+      "tag": "v1.5",
+      "published_at": "2026-03-31T12:00:00+00:00",
+      "commits": [
+        "2026-03-31T12:00:00+00:00"
+      ]
+    },
+    {
+      "tag": "v1.6",
+      "published_at": "2026-04-30T12:00:00+00:00",
+      "commits": [
+        "2026-03-31T00:00:00+00:00",
+        "2026-04-30T12:00:00+00:00"
+      ]
+    },
+    {
+      "tag": "v1.7-rc1",
+      "published_at": "2026-05-01T00:00:00+00:00",
+      "commits": [
+        "2026-05-01T00:00:00+00:00"
+      ]
+    },
+    {
+      "tag": "v1.7",
+      "published_at": "2026-05-31T12:00:00+00:00",
+      "commits": [
+        "2026-05-31T12:00:00+00:00"
+      ]
+    },
+    {
+      "tag": "v1.8",
+      "published_at": "2026-06-30T12:00:00+00:00",
+      "commits": [
+        "2026-05-31T00:00:00+00:00",
+        "2026-06-30T12:00:00+00:00"
+      ]
+    },
+    {
+      "tag": "v1.9",
+      "published_at": "2026-07-31T12:00:00+00:00",
+      "commits": [
+        "2026-07-01T00:00:00+00:00",
+        "2026-07-31T12:00:00+00:00"
+      ]
+    }
+  ],
+  "cfr_a": 0.2,
+  "recuperacao_mediana_h": 5,
+  "esperado": {
+    "n_deploys_c1": 10,
+    "n_prereleases": 3,
+    "n_tags_janela": 13,
+    "frequencia_semana": 0.1917808219178082,
+    "frequencia_semana_c2": 0.2493150684931507,
+    "frequencia_semana_c3": 0.2493150684931507,
+    "lead_time_a_h": 744,
+    "lead_time_b_h": 378,
+    "lead_time_b_h_c2": 12,
+    "lead_time_b_h_c3": 0,
+    "categoria_c1": "Medium",
+    "categoria_c2": "High",
+    "categoria_c3": "High"
+  }
+}

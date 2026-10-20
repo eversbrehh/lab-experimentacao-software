@@ -233,7 +233,7 @@ def test_le_as_releases_do_cache_seguindo_a_paginacao(tmp_path):
     proxima = "https://api.github.com/repos/org/repo/releases?per_page=100&page=2"
     gravar_cache(tmp_path, url_releases("org/repo"), todas[:2], f'<{proxima}>; rel="next"')
     gravar_cache(tmp_path, "https://api.github.com/repos/org/repo/releases?page=2&per_page=100", todas[2:])
-    assert ler_releases_do_cache(str(tmp_path), "org/repo") == lista_releases(3)
+    assert ler_releases_do_cache(str(tmp_path), "org/repo") == lista_releases(3, notas=None)  # cache sem `body`
 
 
 class RespostaFalsa:
@@ -258,7 +258,7 @@ def test_le_o_cache_gravado_pelo_cliente_http_do_pipeline(tmp_path, monkeypatch)
     coletadas = coleta_de_releases.coletar_releases("org", "repo")
 
     assert not respostas
-    assert ler_releases_do_cache(str(tmp_path), "org/repo") == coletadas == lista_releases(3)
+    assert ler_releases_do_cache(str(tmp_path), "org/repo") == coletadas == lista_releases(3, notas="notas")
 
 
 def test_rascunho_sem_data_fica_com_published_at_none(tmp_path):

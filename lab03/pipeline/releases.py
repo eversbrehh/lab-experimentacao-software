@@ -8,13 +8,15 @@ RQ 07) seguem a mesma regra, com a data do commit apontado no lugar de `publishe
 
 import logging
 from datetime import datetime
+from urllib.parse import quote
 
 from metricas.janela import dentro_da_janela
 from pipeline import cliente_http
 
-# Só estes campos vão para o cache. A lista de releases traz notas e anexos, e o
-# `compare` traz o diff de até 300 arquivos; nada disso é usado.
-CAMPOS_RELEASE = ("tag_name", "published_at", "draft", "prerelease", "html_url")
+# Só estes campos vão para o cache. A lista de releases traz anexos e o `compare` traz o diff
+# de até 300 arquivos; nada disso é usado. O texto das notas (`body`) é usado pela heurística
+# de release corretiva.
+CAMPOS_RELEASE = ("tag_name", "published_at", "draft", "prerelease", "html_url", "body")
 CAMPOS_COMMIT = ("sha", "commit")
 CAMPOS_TAG = ("name", "commit")
 
@@ -45,7 +47,9 @@ def coletar_releases(owner: str, repo: str) -> list[dict]:
     """Todas as releases do repositório, sem filtro de data.
 
     Cada item traz `tag_name`, `published_at` (`datetime` UTC, ou `None` em rascunhos),
-    `draft`, `prerelease` e `html_url`.
+    `draft`, `prerelease`, `html_url` e `notas` (o texto das *release notes*, `""` quando
+    vazio e `None` quando a resposta do cache não traz o campo, como as de antes da v3 da
+    heurística).
     """
     brutas = cliente_http.get_paginado(f"/repos/{owner}/{repo}/releases", campos=CAMPOS_RELEASE)
     return [
@@ -55,6 +59,7 @@ def coletar_releases(owner: str, repo: str) -> list[dict]:
             "draft": bool(bruta["draft"]),
             "prerelease": bool(bruta["prerelease"]),
             "html_url": bruta["html_url"],
+            "notas": (bruta.get("body") or "") if "body" in bruta else None,
         }
         for bruta in brutas
     ]
@@ -135,6 +140,16 @@ def commits_entre(owner: str, repo: str, base: str, head: str) -> list[dict] | N
     ]
 
 
+def notas_da_release(owner: str, repo: str, tag: str) -> str | None:
+    """Texto das *release notes* da release de `tag`, ou `None` se a release não existe (404).
+
+    Notas vazias voltam como `""`. A lista de releases (`coletar_releases`) não guarda o
+    texto; esta função serve a quem avalia poucas releases, como `analise.avaliar_heuristica`.
+    """
+    corpo = cliente_http.get_json(f"/repos/{owner}/{repo}/releases/tags/{quote(tag, safe='')}", campos=("body",))
+    return None if corpo is None else (corpo.get("body") or "")
+
+
 def releases_com_commits(
     owner: str, repo: str, releases: list[dict], inicio, fim, incluir_prereleases: bool = False
 ) -> tuple[list[dict], int]:
@@ -147,7 +162,8 @@ def releases_com_commits(
     Cada item devolvido traz `tag_name`, `published_at`, `commits` (a lista das datas dos
     commits incluídos), `mensagens` (a lista das mensagens completas desses commits, na
     mesma ordem) e `anterior_tag` (a tag do deploy anterior, mesmo fora da janela, ou `None`
-    na primeira release da história). `commits` e `mensagens` são `None` na primeira
+    na primeira release da história) e `notas` (o texto das *release notes*, `None` quando
+    não foi coletado). `commits` e `mensagens` são `None` na primeira
     release (sem anterior) e quando o `compare` dá 404; só o segundo caso entra no total
     devolvido. Sem commits novos, as duas listas são vazias.
 
@@ -235,6 +251,7 @@ def _com_commits(owner: str, repo: str, ordenados: list[dict], inicio, fim, rotu
                 "commits": commits,
                 "mensagens": mensagens,
                 "anterior_tag": anterior["tag_name"] if anterior is not None else None,
+                "notas": item.get("notas"),
             }
         )
     comparacoes = sum(1 for anterior, item in na_janela if anterior is not None and anterior["ref"] != item["ref"])

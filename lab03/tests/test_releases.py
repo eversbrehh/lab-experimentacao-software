@@ -98,10 +98,36 @@ def test_coletar_releases_grava_campos_e_converte_a_data(rede):
         "draft": False,
         "prerelease": False,
         "html_url": "https://github.com/o/r/releases/tag/v1.1.0",
+        "notas": "",  # sem `body` na resposta, o cliente guarda `None` e as notas ficam vazias
     }
     assert resultado[1]["prerelease"] is True
     assert resultado[2]["draft"] is True and resultado[2]["published_at"] is None
-    assert set(resultado[0]) == {"tag_name", "published_at", "draft", "prerelease", "html_url"}
+    assert set(resultado[0]) == {"tag_name", "published_at", "draft", "prerelease", "html_url", "notas"}
+
+
+def test_coletar_releases_traz_as_notas_e_notas_vazias_viram_texto_vazio(rede):
+    rede.fila.append(
+        RespostaFalsa(
+            200,
+            [
+                {**release_bruta("v1.1.0", "2026-03-15T12:00:00Z"), "body": "## Bug Fixes\n- x"},
+                {**release_bruta("v1.0.0", "2026-03-01T12:00:00Z"), "body": None},
+            ],
+        )
+    )
+
+    resultado = releases.coletar_releases("o", "r")
+
+    assert [r["notas"] for r in resultado] == ["## Bug Fixes\n- x", ""]
+
+
+def test_notas_da_release_busca_pela_tag_e_devolve_none_no_404(rede):
+    rede.fila.append(RespostaFalsa(200, {"tag_name": "v1.0.0", "body": "notas"}))
+    rede.fila.append(RespostaFalsa(404, {"message": "Not Found"}))
+
+    assert releases.notas_da_release("o", "r", "pacote@1.0.0") == "notas"
+    assert releases.notas_da_release("o", "r", "v9") is None
+    assert "tags/pacote%401.0.0" in rede.urls[0]
 
 
 def test_coletar_releases_junta_todas_as_paginas_sem_filtro_de_data(rede):
@@ -253,7 +279,7 @@ def test_cache_de_releases_guarda_so_os_campos_usados(rede, tmp_path):
     releases.coletar_releases("o", "r")
 
     (corpo,) = _corpos_no_cache(tmp_path)
-    assert set(corpo[0]) == {"tag_name", "published_at", "draft", "prerelease", "html_url"}
+    assert set(corpo[0]) == {"tag_name", "published_at", "draft", "prerelease", "html_url", "body"}
 
 
 def test_cache_do_compare_descarta_o_diff_dos_arquivos(rede, tmp_path):
@@ -354,6 +380,7 @@ def test_exemplo_do_enunciado_traz_as_datas_dos_commits(comparacoes):
         "commits": [utc(2026, 3, 2), utc(2026, 3, 10), utc(2026, 3, 14)],
         "mensagens": ["m", "m", "m"],
         "anterior_tag": "v1.0",
+        "notas": None,
     }
 
 
@@ -363,7 +390,10 @@ def test_primeira_release_da_historia_tem_commits_none_e_nao_e_404(comparacoes):
     resultado, total_404 = releases.releases_com_commits("o", "r", todas, INICIO, FIM)
 
     assert resultado == [
-        {"tag_name": "v1.0", "published_at": utc(2026, 2, 1), "commits": None, "mensagens": None, "anterior_tag": None}
+        {
+            "tag_name": "v1.0", "published_at": utc(2026, 2, 1), "commits": None, "mensagens": None,
+            "anterior_tag": None, "notas": None,
+        }
     ]
     assert total_404 == 0
     assert comparacoes.chamadas == []
@@ -542,11 +572,11 @@ def test_tags_ordenadas_pela_data_do_commit_com_anterior_fora_da_janela(tags, co
     assert resultado == [
         {
             "tag_name": "v1.5", "published_at": utc(2026, 1, 1), "commits": [utc(2025, 12, 1)],
-            "mensagens": ["m"], "anterior_tag": "v1.0",
+            "mensagens": ["m"], "anterior_tag": "v1.0", "notas": None,
         },
         {
             "tag_name": "v2.0", "published_at": utc(2026, 3, 1), "commits": [utc(2026, 2, 1), utc(2026, 2, 20)],
-            "mensagens": ["m", "m"], "anterior_tag": "v1.5",
+            "mensagens": ["m", "m"], "anterior_tag": "v1.5", "notas": None,
         },
     ]
     assert ignoradas == 0

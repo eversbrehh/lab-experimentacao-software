@@ -46,7 +46,7 @@ Etapas, em ordem:
 
 O dataset: uma linha por repositório aprovado no funil. `full_name` é a chave. As colunas aparecem na ordem abaixo.
 
-O `repositorios.csv` versionado hoje tem as 18 colunas das seções 3.1 a 3.5. O pipeline atual grava 28 colunas: as 18 mais as 10 de C2 e C3 (seção 3.7), que saem vazias com `coleta.variantes_rq07: false`. A coluna `cfr_b` (seção 3.6) ainda não existe no pipeline.
+O `repositorios.csv` versionado tem 30 colunas, na ordem das seções abaixo: as de metadados, contagens, métricas DORA e C1 (3.1 a 3.5), `rework_rate` (3.6) e as 10 de C2 e C3 (3.7). As 10 de C2 e C3 estão **vazias** neste arquivo, porque ele foi gerado com `coleta.variantes_rq07: false`; a Sprint 03 as preenche. `cfr_b` e `rework_rate` usam a versão 3 da heurística de release corretiva (seção 5.4 e `docs/heuristica-corretiva.md`).
 
 ### 3.1 Metadados
 
@@ -74,6 +74,7 @@ O `repositorios.csv` versionado hoje tem as 18 colunas das seções 3.1 a 3.5. O
 | `lead_time_b_h` | decimal | horas | RQ 02 (b): mediana, entre **todos** os commits de todas as releases, de `published_at − data do commit` | Nenhuma release entra no cálculo |
 | `releases_ignoradas_404` | inteiro | releases | Releases que ficaram fora do lead time porque `GET /repos/{owner}/{repo}/compare/{anterior}...{release}` devolveu 404 (tag apagada ou reescrita) | Nunca (0 quando não houve) |
 | `cfr_a` | decimal | fração de 0 a 1 | RQ 03 (a): `falhas ÷ (falhas + sucessos)` sobre os runs, com todos os workflows juntos. Mede falha de **CI**, não falha em produção | Nenhum run de sucesso ou falha |
+| `cfr_b` | decimal | fração de 0 a 1 | RQ 03 (b): `releases que falharam ÷ releases avaliadas`, sobre os deploys da janela. Uma release R falha se a release seguinte sai em até 7 dias depois dela e é corretiva em relação a R (heurística de `metricas/corretiva.py`, versão 3). R só é avaliada quando os 7 dias seguintes cabem na janela (`published_at + 7 dias ≤ 30/09/2026`); as dos últimos 7 dias ficam fora do denominador (censura). Uma release seguinte com `compare` 404 não pode ser avaliada como corretiva e conta como não corretiva | Nenhuma release é avaliável (todos os deploys da janela estão nos últimos 7 dias; ocorre em 2 repositórios do dataset) |
 | `recuperacao_mediana_h` | decimal | horas | RQ 04: mediana, entre os episódios **completos** de todos os workflows, de `updated_at do sucesso − run_started_at da primeira falha` (ver 3.4) | Nenhum episódio completo |
 
 Regras comuns do lead time: o commit é o de `commit.author.date`; a primeira release do repositório (sem release anterior), a release com `compare` 404 e a release sem commits novos ficam fora do cálculo, nas duas variantes. A release anterior pode estar fora da janela.
@@ -106,11 +107,11 @@ Cada métrica recebe uma nota (Elite 4, High 3, Medium 2, Low 1) pelos cortes ab
 | `categoria_c1` | texto | — | `Elite`, `High`, `Medium` ou `Low`: mediana das notas das métricas definidas, arredondada para baixo. C1 usa a frequência por release, o lead time (a), o CFR (a) e a recuperação (`frequencia_semana`, `lead_time_a_h`, `cfr_a`, `recuperacao_mediana_h`) |
 | `n_metricas_classificadas` | inteiro | métricas | Quantas das 4 métricas estavam definidas e entraram na mediana (3 ou 4 no dataset). Métrica vazia não recebe nota, em vez de contar como a pior |
 
-### 3.6 Coluna `cfr_b` (continuação da #168)
+### 3.6 Coluna `rework_rate` (RQ 08)
 
-| Coluna | Tipo | Unidade | Fórmula ou origem |
-|---|---|---|---|
-| `cfr_b` | decimal | fração de 0 a 1 | RQ 03 (b): `releases que falharam ÷ releases avaliadas`. Uma release R falha se for seguida, em até 7 dias, por uma release corretiva; releases dos últimos 7 dias da janela ficam fora do denominador (censura). A heurística de release corretiva é a da #158 e a sua versão final fica registrada em `dados/rotulagem/versoes_heuristica.csv`. **Ainda não existe no pipeline nem no CSV versionado:** entra na continuação da #168 (levar as mensagens de commit até `cfr_entrega` e regerar o CSV pelo cache). |
+| Coluna | Tipo | Unidade | Fórmula ou origem | Vazia quando |
+|---|---|---|---|---|
+| `rework_rate` | decimal | fração de 0 a 1 | `releases corretivas ÷ releases avaliadas`, sobre os deploys da janela, com a heurística de `metricas/corretiva.py` (versão 3). Só entram as releases com mensagens de commit conhecidas: a primeira release da história e as de `compare` 404 ficam fora do numerador e do denominador. Diferente do `cfr_b`, conta as próprias releases corretivas, inclusive as publicadas depois do prazo de 7 dias, e não tem censura dos últimos 7 dias | Nenhuma release tem mensagens conhecidas |
 
 ### 3.7 Colunas de C2 e C3 (RQ 07)
 
@@ -123,7 +124,7 @@ São calculadas para a análise de sensibilidade da RQ 07 (C2: releases e pré-r
 | `tags_ignoradas_404` | inteiro | tags | Tags fora do lead time porque o `compare` com a tag anterior devolveu 404 |
 | `frequencia_semana_c2` | decimal | deploys por semana | `(n_deploys + n_prereleases) ÷ (365 ÷ 7)` |
 | `lead_time_b_h_c2` | decimal | horas | Lead time (b) usando releases e pré-releases como deploys |
-| `cfr_b_c2` | decimal | fração de 0 a 1 | CFR (b) usando releases e pré-releases. Depende da heurística da #158 |
+| `cfr_b_c2` | decimal | fração de 0 a 1 | CFR (b) usando releases e pré-releases como deploys, com a mesma heurística e a mesma regra de censura do `cfr_b` |
 | `frequencia_semana_c3` | decimal | deploys por semana | `n_tags_janela ÷ (365 ÷ 7)` |
 | `lead_time_b_h_c3` | decimal | horas | Lead time (b) usando tags como deploys; a data da tag é a do commit apontado |
 | `categoria_c2` | texto | — | Classificação com `frequencia_semana_c2`, `lead_time_b_h_c2`, `cfr_b_c2` e `recuperacao_mediana_h` |
@@ -241,14 +242,22 @@ Gerado por `python -m analise.avaliar_heuristica --versao N` (#168): avalia a he
 | Coluna | Tipo | Unidade | Descrição |
 |---|---|---|---|
 | `versao` | inteiro | — | Número da versão da heurística |
-| `regra` | texto | — | Descrição da regra da versão. A versão 1 é: (A) só o *patch* muda no SemVer em relação à release anterior; (B) `revert`, `hotfix`, `bugfix` ou `fix` na mensagem de algum commit entre as duas releases |
+| `regra` | texto | — | Descrição da regra da versão (resumo; o texto completo está em `docs/heuristica-corretiva.md`) |
 | `n` | inteiro | releases | Releases avaliadas (300) |
 | `vp`, `fp`, `fn` | inteiro | releases | Verdadeiros positivos, falsos positivos e falsos negativos contra o consenso |
 | `precisao` | decimal | de 0 a 1 | `vp ÷ (vp + fp)`. Vazia quando a heurística não marca nenhuma release |
 | `recall` | decimal | de 0 a 1 | `vp ÷ (vp + fn)`. Vazio quando o consenso não tem nenhuma corretiva |
 | `f1` | decimal | de 0 a 1 | `2·vp ÷ (2·vp + fp + fn)` (média harmônica de precisão e recall) |
 
-A versão 1 tem F1 de 0,415 (precisão 0,264 e recall 0,973), abaixo da meta de 0,70 do enunciado; o refino da heurística ficou para a continuação da #168.
+Versões registradas no repositório (F1 contra o consenso, em 300 releases):
+
+| Versão | Precisão | Recall | F1 |
+|---|---|---|---|
+| 1 | 0,264 | 0,973 | 0,415 |
+| 2 | 0,520 | 0,726 | 0,606 |
+| 3 | 0,632 | 0,658 | 0,644 |
+
+A versão 3 é a usada em `cfr_b`, `rework_rate` e `cfr_b_c2`. Ela não atinge a meta de 0,70 do enunciado, e o resultado entra nas ameaças à validade. As regras de cada versão estão em `docs/heuristica-corretiva.md`.
 
 ## 6. Outros arquivos
 
